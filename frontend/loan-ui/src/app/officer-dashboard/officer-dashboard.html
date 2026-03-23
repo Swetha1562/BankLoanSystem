@@ -1,0 +1,45 @@
+<div class="page-container">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">Officer Dashboard</h1>
+      <p class="text-muted">Manage all loan requests and process final decisions.</p>
+    </div>
+
+    <button class="btn-danger" (click)="logout()">Logout</button>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <h4>Total Applications</h4>
+      <div class="metric-value">{{ totalLoans }}</div>
+      <div class="metric-note">In the system</div>
+    </div>
+
+    <div class="metric-card">
+      <h4>Pending</h4>
+      <div class="metric-value">{{ pendingLoans }}</div>
+      <div class="metric-note">Need review</div>
+    </div>
+
+    <div class="metric-card">
+      <h4>Approved</h4>
+      <div class="metric-value">{{ approvedLoans }}</div>
+      <div class="metric-note">Processed positively</div>
+    </div>
+
+    <div class="metric-card">
+      <h4>Rejected</h4>
+      <div class="metric-value">{{ rejectedLoans }}</div>
+      <div class="metric-note">Rejected applications</div>
+    </div>
+  </div>
+
+  <div class="section-card" style="margin-top: 22px;">
+    <h2 style="margin-top: 0;">Quick Actions</h2>
+    <p class="text-muted">Review and decide on customer applications.</p>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px;">
+      <button class="btn-primary" routerLink="/all-loans">View All Loans</button>
+    </div>
+  </div>
+</div>

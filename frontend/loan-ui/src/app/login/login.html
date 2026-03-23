@@ -1,0 +1,65 @@
+<div class="auth-page">
+  <div class="auth-left">
+    <h1>Bank Loan System</h1>
+    <p>
+      A smart loan management platform for customers and officers to
+      apply, review, and track loan decisions with ease.
+    </p>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2>Login</h2>
+      <p>Enter your credentials to access your dashboard.</p>
+
+      <!-- ✅ IMPORTANT: ngSubmit added -->
+      <form (ngSubmit)="login()">
+        
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input
+            class="form-control"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            class="form-control"
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            required
+          />
+        </div>
+
+        <!-- ✅ submit instead of button -->
+        <button
+          type="submit"
+          class="btn-primary"
+          style="width: 100%; margin-top: 8px;"
+        >
+          Login
+        </button>
+
+        <!-- ✅ routerLink stays -->
+        <div style="margin-top: 18px; text-align: center;">
+          <a
+            routerLink="/register"
+            style="color: var(--accent-purple); font-weight: 600;"
+          >
+            Create a new account
+          </a>
+        </div>
+
+        <p *ngIf="message" class="text-muted" style="margin-top: 16px;">
+          {{ message }}
+        </p>
+      </form>
+    </div>
+  </div>
+</div>

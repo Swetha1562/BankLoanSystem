@@ -1,0 +1,71 @@
+<div class="page-container">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">Apply for Loan</h1>
+      <p class="text-muted">Fill in your details to submit a new loan application.</p>
+    </div>
+
+    <button class="btn-secondary" routerLink="/customer-dashboard">Back</button>
+  </div>
+
+  <div class="section-card">
+    <form>
+      <div class="input-row">
+        <div class="form-group">
+          <label class="form-label">Loan Type</label>
+          <input class="form-control" type="text" [(ngModel)]="loanData.loanType" name="loanType" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Amount</label>
+          <input class="form-control" type="number" [(ngModel)]="loanData.amount" name="amount" />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label class="form-label">Purpose</label>
+          <input class="form-control" type="text" [(ngModel)]="loanData.purpose" name="purpose" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Duration (Months)</label>
+          <input class="form-control" type="number" [(ngModel)]="loanData.durationMonths" name="durationMonths" />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label class="form-label">Annual Income</label>
+          <input class="form-control" type="number" [(ngModel)]="loanData.annualIncome" name="annualIncome" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Employment Years</label>
+          <input class="form-control" type="number" [(ngModel)]="loanData.employmentYears" name="employmentYears" />
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input class="form-control" type="number" [(ngModel)]="loanData.age" name="age" />
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;">
+        <button type="button" class="btn-primary" (click)="applyLoan()" [disabled]="isSubmitting">
+          {{ isSubmitting ? 'Submitting...' : 'Submit' }}
+        </button>
+      </div>
+
+      <p *ngIf="message" style="color: #15803d; margin-top: 16px; font-weight: 600;">
+        {{ message }}
+      </p>
+
+      <p *ngIf="errorMessage" style="color: #b91c1c; margin-top: 16px; font-weight: 600;">
+        {{ errorMessage }}
+      </p>
+    </form>
+  </div>
+</div>

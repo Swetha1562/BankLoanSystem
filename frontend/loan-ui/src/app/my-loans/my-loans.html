@@ -1,0 +1,63 @@
+<div class="page-shell">
+  <div class="page-header">
+    <div>
+      <h1>My Loan Applications</h1>
+      <p>Track all your submitted loan requests and their current status.</p>
+    </div>
+
+    <button class="btn-secondary" type="button" routerLink="/customer-dashboard">
+      Back
+    </button>
+  </div>
+
+  <div class="stat-card">
+    <h3>Total Loans</h3>
+    <div class="stat-number">{{ loans.length }}</div>
+    <p>Your submitted applications</p>
+  </div>
+
+  <div class="table-card" *ngIf="loans.length > 0; else emptyState">
+    <table class="loan-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Loan Type</th>
+          <th>Amount</th>
+          <th>Purpose</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let loan of loans">
+          <td>{{ loan.id }}</td>
+          <td>{{ loan.loanType }}</td>
+          <td>₹ {{ loan.amount }}</td>
+          <td>{{ loan.purpose }}</td>
+          <td>
+            <span
+              class="status-badge"
+              [ngClass]="{
+                'pending': loan.status === 'Pending',
+                'approved': loan.status === 'Approved',
+                'rejected': loan.status === 'Rejected'
+              }"
+            >
+              {{ loan.status }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #emptyState>
+    <div class="empty-card">
+      <h3>No loans found</h3>
+      <p>You have not submitted any loan applications yet.</p>
+      <button class="btn-primary" type="button" routerLink="/apply-loan">
+        Apply for Loan
+      </button>
+    </div>
+  </ng-template>
+</div>
