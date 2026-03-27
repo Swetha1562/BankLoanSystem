@@ -2,6 +2,27 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
+export interface LoanApplication {
+  id: number;
+  loanType: string;
+  amount: number;
+  purpose: string;
+  durationMonths: number;
+  annualIncome: number;
+  existingLiabilities?: number;
+  status: string;
+  createdAt?: string;
+  riskLevel?: string;
+  eligibilityScore?: number;
+  recommendedDecision?: string;
+  rowVersion?: string;
+  remarks?: string;
+}
+
+export interface LoanActionResponse {
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -17,37 +38,56 @@ export class LoanService {
     });
   }
 
-  applyLoan(data: any): Observable<any> {
+  applyLoan(data: unknown): Observable<string> {
     return this.http.post(`${this.baseUrl}/apply`, data, {
+      headers: this.getAuthHeaders(),
+      responseType: 'text'
+    });
+  }
+
+  getMyLoans(): Observable<LoanApplication[]> {
+    return this.http.get<LoanApplication[]>(`${this.baseUrl}/myloans`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  getMyLoans(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/myloans`, {
+  getAllLoans(): Observable<LoanApplication[]> {
+    return this.http.get<LoanApplication[]>(`${this.baseUrl}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  getAllLoans(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}`, {
+  getLoanById(id: number): Observable<LoanApplication> {
+    return this.http.get<LoanApplication>(`${this.baseUrl}/${id}`, {
       headers: this.getAuthHeaders()
     });
   }
 
-  approveLoan(id: number, remarks: string = '', rowVersion: any = null): Observable<any> {
-    return this.http.post(
-      `${this.baseUrl}/${id}/approve`,
+  approveLoan(
+    loanId: number,
+    remarks: string,
+    rowVersion?: string
+  ): Observable<LoanActionResponse> {
+    return this.http.post<LoanActionResponse>(
+      `${this.baseUrl}/${loanId}/approve`,
       { remarks, rowVersion },
-      { headers: this.getAuthHeaders() }
+      {
+        headers: this.getAuthHeaders()
+      }
     );
   }
 
-  rejectLoan(id: number, remarks: string, rowVersion: any = null): Observable<any> {
-    return this.http.post(
-      `${this.baseUrl}/${id}/reject`,
+  rejectLoan(
+    loanId: number,
+    remarks: string,
+    rowVersion?: string
+  ): Observable<LoanActionResponse> {
+    return this.http.post<LoanActionResponse>(
+      `${this.baseUrl}/${loanId}/reject`,
       { remarks, rowVersion },
-      { headers: this.getAuthHeaders() }
+      {
+        headers: this.getAuthHeaders()
+      }
     );
   }
 }

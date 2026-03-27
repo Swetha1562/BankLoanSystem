@@ -1,46 +1,44 @@
-<div class="page-shell">
-  <div class="page-header">
+<div class="page-container">
+  <div class="topbar">
     <div>
-      <h1>My Loan Applications</h1>
-      <p>Track all your submitted loan requests and their current status.</p>
+      <h1 class="page-title">My Loans</h1>
+      <p class="text-muted">
+        Review all your submitted applications and their latest status.
+      </p>
     </div>
 
-    <button class="btn-secondary" type="button" routerLink="/customer-dashboard">
-      Back
-    </button>
+   
   </div>
 
-  <div class="stat-card">
-    <h3>Total Loans</h3>
-    <div class="stat-number">{{ loans.length }}</div>
-    <p>Your submitted applications</p>
+  <div class="metric-grid" style="margin-bottom: 22px;">
+    <div class="metric-card">
+      <h4>Total Loans</h4>
+      <div class="metric-value">{{ loans.length }}</div>
+      <div class="metric-note">Applications submitted by you</div>
+    </div>
   </div>
 
-  <div class="table-card" *ngIf="loans.length > 0; else emptyState">
-    <table class="loan-table">
+  <div class="table-wrapper" *ngIf="loans.length > 0; else emptyState">
+    <table class="styled-table">
       <thead>
         <tr>
-          <th>ID</th>
           <th>Loan Type</th>
           <th>Amount</th>
-          <th>Purpose</th>
           <th>Status</th>
         </tr>
       </thead>
 
       <tbody>
         <tr *ngFor="let loan of loans">
-          <td>{{ loan.id }}</td>
           <td>{{ loan.loanType }}</td>
           <td>₹ {{ loan.amount }}</td>
-          <td>{{ loan.purpose }}</td>
           <td>
             <span
               class="status-badge"
               [ngClass]="{
-                'pending': loan.status === 'Pending',
-                'approved': loan.status === 'Approved',
-                'rejected': loan.status === 'Rejected'
+                'status-pending': loan.status === 'Pending',
+                'status-approved': loan.status === 'Approved',
+                'status-rejected': loan.status === 'Rejected'
               }"
             >
               {{ loan.status }}
@@ -52,9 +50,11 @@
   </div>
 
   <ng-template #emptyState>
-    <div class="empty-card">
-      <h3>No loans found</h3>
-      <p>You have not submitted any loan applications yet.</p>
+    <div class="section-card empty-state">
+      <h3 style="margin-top: 0; color: var(--text-white);">No loans found</h3>
+      <p class="text-muted">
+        You have not submitted any loan applications yet.
+      </p>
       <button class="btn-primary" type="button" routerLink="/apply-loan">
         Apply for Loan
       </button>

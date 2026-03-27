@@ -1,20 +1,27 @@
 <div class="auth-page">
   <div class="auth-left">
-    <h1>Bank Loan System</h1>
+    <h1>StratosLend</h1>
     <p>
-      A smart loan management platform for customers and officers to
-      apply, review, and track loan decisions with ease.
+      A smart loan management platform for customers and officers to apply,
+      review, and track loan decisions with ease.
     </p>
   </div>
 
   <div class="auth-right">
     <div class="auth-card">
-      <h2>Login</h2>
-      <p>Enter your credentials to access your dashboard.</p>
 
-      <!-- ✅ IMPORTANT: ngSubmit added -->
-      <form (ngSubmit)="login()">
-        
+      <div class="form-header">
+        <span class="mini-badge">Login</span>
+        <h2>Welcome Back</h2>
+        <p>Access your dashboard securely and continue your workflow.</p>
+      </div>
+
+      <div class="alert error-alert" *ngIf="message">
+        {{ message }}
+      </div>
+
+      <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
+
         <div class="form-group">
           <label class="form-label">Email</label>
           <input
@@ -23,42 +30,57 @@
             [(ngModel)]="email"
             name="email"
             required
+            #emailRef="ngModel"
+            [class.invalid]="loginForm.submitted && emailRef.invalid"
+            placeholder="Enter your email"
           />
+          <small class="field-error" *ngIf="loginForm.submitted && emailRef.invalid">
+            Please enter a valid email address.
+          </small>
         </div>
 
         <div class="form-group">
           <label class="form-label">Password</label>
-          <input
-            class="form-control"
-            type="password"
-            [(ngModel)]="password"
-            name="password"
-            required
-          />
+
+          <div class="password-wrapper">
+            <input
+              class="form-control"
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="password"
+              name="password"
+              required
+              #passwordRef="ngModel"
+              [class.invalid]="loginForm.submitted && passwordRef.invalid"
+              placeholder="Enter your password"
+            />
+
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="showPassword = !showPassword"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+
+          <small class="field-error" *ngIf="loginForm.submitted && passwordRef.invalid">
+            Password is required.
+          </small>
         </div>
 
-        <!-- ✅ submit instead of button -->
         <button
           type="submit"
           class="btn-primary"
-          style="width: 100%; margin-top: 8px;"
+          style="width: 100%;"
         >
           Login
         </button>
 
-        <!-- ✅ routerLink stays -->
-        <div style="margin-top: 18px; text-align: center;">
-          <a
-            routerLink="/register"
-            style="color: var(--accent-purple); font-weight: 600;"
-          >
-            Create a new account
-          </a>
+        <div class="form-footer">
+          <p>New to StratosLend?</p>
+          <a routerLink="/register">Create an account</a>
         </div>
 
-        <p *ngIf="message" class="text-muted" style="margin-top: 16px;">
-          {{ message }}
-        </p>
       </form>
     </div>
   </div>

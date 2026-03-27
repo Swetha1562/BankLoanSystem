@@ -1,0 +1,33 @@
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>StratosLend</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a *ngIf="isCustomer" routerLink="/customer-dashboard" routerLinkActive="active">
+        Dashboard
+      </a>
+
+      <a *ngIf="isCustomer" routerLink="/apply-loan" routerLinkActive="active">
+        Apply Loan
+      </a>
+
+      <a *ngIf="isCustomer" routerLink="/my-loans" routerLinkActive="active">
+        My Loans
+      </a>
+
+      <a *ngIf="isOfficer" routerLink="/officer-dashboard" routerLinkActive="active">
+        Dashboard
+      </a>
+
+      <a *ngIf="isOfficer" routerLink="/all-loans" routerLinkActive="active">
+        All Loans
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

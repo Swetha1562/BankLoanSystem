@@ -1,7 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { LoanService } from '../services/loan.service';
+import {
+  LoanApplication,
+  LoanActionResponse,
+  LoanService
+} from '../services/loan.service';
 
 @Component({
   selector: 'app-all-loans',
@@ -11,7 +15,7 @@ import { LoanService } from '../services/loan.service';
   styleUrls: ['./all-loans.css']
 })
 export class AllLoansComponent implements OnInit {
-  loans: any[] = [];
+  loans: LoanApplication[] = [];
   errorMessage = '';
   successMessage = '';
   isLoading = false;
@@ -29,12 +33,13 @@ export class AllLoansComponent implements OnInit {
   loadAllLoans(): void {
     this.isLoading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     const token = localStorage.getItem('token');
     console.log('ALL LOANS TOKEN:', token);
 
     this.loanService.getAllLoans().subscribe({
-      next: (res: any[]) => {
+      next: (res: LoanApplication[]) => {
         console.log('ALL LOANS API RESPONSE:', res);
 
         this.loans = Array.isArray(res) ? res : [];
@@ -44,35 +49,38 @@ export class AllLoansComponent implements OnInit {
         this.isLoading = false;
         this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading all loans:', err);
-        this.errorMessage = err?.error || 'Unable to load all loans.';
+        this.errorMessage =
+          typeof err?.error === 'string'
+            ? err.error
+            : err?.error?.message || 'Unable to load all loans.';
         this.isLoading = false;
         this.cdr.detectChanges();
       }
     });
   }
 
-  approve(loan: any): void {
+  approve(loan: LoanApplication): void {
     this.errorMessage = '';
     this.successMessage = '';
 
     const remarks = prompt('Enter approval remarks (optional):') || '';
-    const loanId = loan.id || loan.Id;
-    const rowVersion = loan.rowVersion || loan.RowVersion;
+    const loanId = Number(loan.id);
+    const rowVersion = loan.rowVersion;
 
     console.log('APPROVE ID:', loanId);
     console.log('APPROVE REMARKS:', remarks);
     console.log('APPROVE ROW VERSION:', rowVersion);
 
     this.loanService.approveLoan(loanId, remarks, rowVersion).subscribe({
-      next: (res) => {
+      next: (res: LoanActionResponse) => {
         console.log('APPROVE SUCCESS RESPONSE:', res);
         this.successMessage = res?.message || 'Loan approved successfully.';
         alert(this.successMessage);
         this.loadAllLoans();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('APPROVE ERROR:', err);
         this.errorMessage =
           typeof err?.error === 'string'
@@ -83,7 +91,7 @@ export class AllLoansComponent implements OnInit {
     });
   }
 
-  reject(loan: any): void {
+  reject(loan: LoanApplication): void {
     this.errorMessage = '';
     this.successMessage = '';
 
@@ -95,21 +103,21 @@ export class AllLoansComponent implements OnInit {
       return;
     }
 
-    const loanId = loan.id || loan.Id;
-    const rowVersion = loan.rowVersion || loan.RowVersion;
+    const loanId = Number(loan.id);
+    const rowVersion = loan.rowVersion;
 
     console.log('REJECT ID:', loanId);
     console.log('REJECT REMARKS:', remarks.trim());
     console.log('REJECT ROW VERSION:', rowVersion);
 
     this.loanService.rejectLoan(loanId, remarks.trim(), rowVersion).subscribe({
-      next: (res) => {
+      next: (res: LoanActionResponse) => {
         console.log('REJECT SUCCESS RESPONSE:', res);
         this.successMessage = res?.message || 'Loan rejected successfully.';
         alert(this.successMessage);
         this.loadAllLoans();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('REJECT ERROR:', err);
         this.errorMessage =
           typeof err?.error === 'string'

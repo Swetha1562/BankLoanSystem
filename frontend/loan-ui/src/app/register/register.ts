@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
@@ -9,50 +10,97 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './register.html',
-  styleUrls: ['./register.css']
+  styleUrl: './register.css'
 })
 export class RegisterComponent {
-  fullName = '';
-  email = '';
-  password = '';
-  role = 'Customer';
-  message = '';
+  registerData = {
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'Customer'
+  };
+
+  submitted = false;
+  isLoading = false;
+  successMessage = '';
   errorMessage = '';
-  isSubmitting = false;
+  showPassword = false;
 
   constructor(
     private authService: AuthService,
     private router: Router
   ) {}
 
-  onRegister(): void {
-    this.message = '';
-    this.errorMessage = '';
-    this.isSubmitting = true;
+  isStrongPassword(password: string): boolean {
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#^()_\-+=])[A-Za-z\d@$!%*?&.#^()_\-+=]{8,}$/;
+    return strongPasswordRegex.test(password);
+  }
 
-    const userData = {
-      fullName: this.fullName,
-      email: this.email,
-      password: this.password,
-      role: this.role
+  register(): void {
+    this.submitted = true;
+    this.successMessage = '';
+    this.errorMessage = '';
+
+    if (
+      !this.registerData.fullName.trim() ||
+      !this.registerData.email.trim() ||
+      !this.registerData.password.trim() ||
+      !this.registerData.confirmPassword.trim() ||
+      !this.registerData.role.trim()
+    ) {
+      this.errorMessage = 'Please fill in all required fields.';
+      return;
+    }
+
+    if (!this.isStrongPassword(this.registerData.password)) {
+      this.errorMessage =
+        'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.';
+      return;
+    }
+
+    if (this.registerData.password !== this.registerData.confirmPassword) {
+      this.errorMessage = 'Passwords do not match.';
+      return;
+    }
+
+    this.isLoading = true;
+
+    const payload = {
+      fullName: this.registerData.fullName.trim(),
+      email: this.registerData.email.trim(),
+      password: this.registerData.password,
+      role: this.registerData.role
     };
 
-    this.authService.register(userData).subscribe({
-      next: (res) => {
-        console.log('Register success:', res);
-        this.isSubmitting = false;
-        this.message = res?.message || 'Registration successful.';
-        alert(this.message);
-        this.router.navigate(['/login']);
+    this.authService.register(payload).subscribe({
+      next: (res: any) => {
+        this.isLoading = false;
+
+        this.successMessage = res?.message || 'Registration successful. You can now log in.';
+        this.errorMessage = '';
+
+        this.registerData = {
+          fullName: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'Customer'
+        };
+
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 1500);
       },
-      error: (err) => {
-        console.error('Register error:', err);
-        this.isSubmitting = false;
+      error: (err: HttpErrorResponse) => {
+        this.isLoading = false;
+        this.successMessage = '';
+
         this.errorMessage =
-          err?.error?.message ||
-          err?.error ||
-          'Registration failed.';
-        alert(this.errorMessage);
+          typeof err.error === 'string'
+            ? err.error
+            : err.error?.message || 'Registration failed. Please try again.';
       }
     });
   }

@@ -1,0 +1,199 @@
+<div class="home-page" id="home">
+
+  <!-- HERO -->
+  <section class="hero-section">
+
+    <div class="hero-content">
+      <div class="hero-left">
+
+        <div class="hero-badge">Trusted Loan Workflow</div>
+
+        <h1>
+          Smart, Secure and Transparent
+          <span>Loan Management System</span>
+        </h1>
+
+        <p class="hero-description">
+          StratosLend enables seamless customer registration, loan applications,
+          officer review, approval decisions, and real-time status tracking.
+        </p>
+
+        <div class="hero-highlights">
+          <div class="highlight-item" *ngFor="let item of highlights">
+            <span class="dot"></span>
+            <span>{{ item }}</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="visual-card">
+        <div class="visual-glow"></div>
+
+        <div class="visual-content">
+          <h3>Apply, Track and Manage Loans Efficiently</h3>
+
+          <p>
+            Built for both customers and officers with secure workflows and
+            real-time status visibility.
+          </p>
+
+          <div class="visual-points">
+            <div class="visual-point">Customer registration</div>
+            <div class="visual-point">Loan application</div>
+            <div class="visual-point">Officer review</div>
+            <div class="visual-point">Live tracking</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- LOANS -->
+  <section class="services-section" id="loan-types">
+
+    <div class="section-header">
+      <div class="section-tag">Loan Services</div>
+      <h2>Choose Your Loan Type</h2>
+      <p>View details or apply instantly.</p>
+    </div>
+
+    <div class="services-grid">
+
+      <div class="service-card" *ngFor="let loan of loanServices">
+
+        <div class="service-icon"></div>
+
+        <h3>{{ loan.title }}</h3>
+        <p>{{ loan.description }}</p>
+
+        <div class="service-actions">
+
+          <!-- DETAILS -->
+          <button class="service-link-btn" (click)="openLoanDetails(loan)">
+            View Details
+          </button>
+
+          <!-- APPLY -->
+          <button
+            class="apply-btn"
+            (click)="applyLoan(loan.title)"
+            [disabled]="userRole === 'Officer'">
+            Apply Now
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- WHY -->
+  <section class="why-section" id="about">
+
+    <div class="why-left">
+      <div class="section-tag">Why Choose Us</div>
+      <h2>Built Like a Real Financial Platform</h2>
+
+      <p>
+        Secure access, structured workflows, and transparent tracking.
+      </p>
+    </div>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <h3>Secure Access</h3>
+        <p>JWT authentication and role-based access.</p>
+      </div>
+
+      <div class="why-card">
+        <h3>Clear Workflow</h3>
+        <p>End-to-end loan lifecycle tracking.</p>
+      </div>
+
+      <div class="why-card">
+        <h3>Decision Visibility</h3>
+        <p>Clear loan status updates.</p>
+      </div>
+
+      <div class="why-card">
+        <h3>Scalable Design</h3>
+        <p>Ready for real-world expansion.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer" id="contact">
+    <div class="footer-content">
+
+      <div>
+        <h3>StratosLend</h3>
+        <p>Smart Lending. Trusted Decisions.</p>
+      </div>
+
+      <div class="footer-links">
+        <a routerLink="/" fragment="home">Home</a>
+        <a routerLink="/" fragment="about">About</a>
+        <a routerLink="/" fragment="contact">Contact</a>
+        <a routerLink="/login">Login</a>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- MODAL -->
+  <div class="loan-modal-backdrop" *ngIf="selectedLoan">
+
+    <div class="loan-modal">
+
+      <div class="loan-modal-header">
+        <h2>{{ selectedLoan.title }}</h2>
+        <button class="close-btn" (click)="closeLoanDetails()">×</button>
+      </div>
+
+      <p class="loan-modal-description">
+        {{ selectedLoan.description }}
+      </p>
+
+      <div class="loan-detail-grid">
+
+        <div class="loan-detail-card">
+          <h4>Interest Rate</h4>
+          <p>{{ selectedLoan.interestRate }}</p>
+        </div>
+
+        <div class="loan-detail-card">
+          <h4>Amount</h4>
+          <p>{{ selectedLoan.amountRange }}</p>
+        </div>
+
+        <div class="loan-detail-card">
+          <h4>Tenure</h4>
+          <p>{{ selectedLoan.tenure }}</p>
+        </div>
+
+        <div class="loan-detail-card">
+          <h4>Eligibility</h4>
+          <p>{{ selectedLoan.eligibility }}</p>
+        </div>
+
+      </div>
+
+      <div class="service-actions" style="margin-top:20px;">
+        <button class="apply-btn" (click)="applyLoan(selectedLoan.title)">
+          Apply Now
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

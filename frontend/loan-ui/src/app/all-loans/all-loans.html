@@ -1,76 +1,101 @@
-<div class="page-container">
-  <div class="topbar">
-    <div>
-      <h1 class="page-title">All Loan Applications</h1>
-      <p class="text-muted">Review every submitted loan and take action on pending requests.</p>
-    </div>
-
-    <button class="btn-secondary" routerLink="/officer-dashboard">Back</button>
-  </div>
-
-  <p *ngIf="successMessage" style="color: green; font-weight: 600; margin: 10px 0;">
+<div class="page-shell">
+  <div
+    *ngIf="successMessage"
+    class="toast toast-success"
+  >
     {{ successMessage }}
-  </p>
-
-  <p *ngIf="errorMessage" style="color: red; font-weight: 600; margin: 10px 0;">
-    {{ errorMessage }}
-  </p>
-
-  <div class="metric-grid">
-    <div class="metric-card">
-      <h4>Total Loans</h4>
-      <div class="metric-value">{{ loans.length }}</div>
-      <div class="metric-note">Applications in the system</div>
-    </div>
   </div>
 
-  <div class="table-wrapper" *ngIf="loans.length > 0; else emptyState">
-    <table class="styled-table">
+  <div
+    *ngIf="errorMessage"
+    class="toast toast-error"
+  >
+    {{ errorMessage }}
+  </div>
+
+  <div class="page-header">
+    <div>
+      <h1>All Loan Applications</h1>
+      <p>Review all submitted loan requests and take approval decisions.</p>
+    </div>
+
+    <button class="btn-secondary" type="button" (click)="goBack()">
+      Back
+    </button>
+  </div>
+
+  <div class="stat-card">
+    <h3>Total Applications</h3>
+    <div class="stat-number">{{ loans.length }}</div>
+    <p>Loans available for review</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-card">
+    Loading loan applications...
+  </div>
+
+  <div class="table-card" *ngIf="!isLoading && loans.length > 0; else noLoans">
+    <table class="loan-table">
       <thead>
         <tr>
           <th>ID</th>
           <th>Loan Type</th>
           <th>Amount</th>
           <th>Purpose</th>
-          <th>Eligibility</th>
-          <th>Risk</th>
+          <th>Eligibility Score</th>
+          <th>Risk Level</th>
           <th>Recommendation</th>
           <th>Status</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
 
       <tbody>
         <tr *ngFor="let loan of loans">
-          <td>{{ loan.id || loan.Id }}</td>
-          <td>{{ loan.loanType || loan.LoanType }}</td>
-          <td class="amount-text">₹ {{ loan.amount || loan.Amount }}</td>
-          <td>{{ loan.purpose || loan.Purpose }}</td>
-          <td>{{ loan.eligibilityScore || loan.EligibilityScore }}</td>
-          <td>{{ loan.riskLevel || loan.RiskLevel }}</td>
-          <td>{{ loan.recommendedDecision || loan.RecommendedDecision }}</td>
+          <td>{{ loan.id }}</td>
+          <td>{{ loan.loanType }}</td>
+          <td>₹ {{ loan.amount }}</td>
+          <td>{{ loan.purpose }}</td>
+          <td>{{ loan.eligibilityScore ?? '-' }}</td>
+          <td>{{ loan.riskLevel ?? '-' }}</td>
+          <td>{{ loan.recommendedDecision ?? '-' }}</td>
+
           <td>
             <span
               class="status-badge"
               [ngClass]="{
-                'status-pending': (loan.status || loan.Status) === 'Pending',
-                'status-approved': (loan.status || loan.Status) === 'Approved',
-                'status-rejected': (loan.status || loan.Status) === 'Rejected'
+                'status-pending': loan.status === 'Pending',
+                'status-approved': loan.status === 'Approved',
+                'status-rejected': loan.status === 'Rejected'
               }"
             >
-              {{ loan.status || loan.Status }}
+              {{ loan.status }}
             </span>
           </td>
+
           <td>
-            <ng-container *ngIf="(loan.status || loan.Status) === 'Pending'; else doneBlock">
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-primary" (click)="approve(loan)">Approve</button>
-                <button class="btn-danger" (click)="reject(loan)">Reject</button>
+            <ng-container *ngIf="loan.status === 'Pending'; else done">
+              <div class="action-buttons">
+                <button
+                  class="btn-approve"
+                  type="button"
+                  (click)="approve(loan)"
+                >
+                  Approve
+                </button>
+
+                <button
+                  class="btn-reject"
+                  type="button"
+                  (click)="reject(loan)"
+                >
+                  Reject
+                </button>
               </div>
             </ng-container>
 
-            <ng-template #doneBlock>
-              <span class="remark-text">Completed</span>
+            <ng-template #done>
+              <span class="done-text">Action Completed</span>
             </ng-template>
           </td>
         </tr>
@@ -78,10 +103,10 @@
     </table>
   </div>
 
-  <ng-template #emptyState>
-    <div class="section-card">
-      <h3 style="margin-top: 0;">No loan applications found</h3>
-      <p class="text-muted">Once customers submit applications, they will appear here.</p>
+  <ng-template #noLoans>
+    <div class="empty-state" *ngIf="!isLoading">
+      <h3>No loan applications found</h3>
+      <p>There are currently no loan requests available for review.</p>
     </div>
   </ng-template>
 </div>

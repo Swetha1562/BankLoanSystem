@@ -1,71 +1,241 @@
-<div class="page-container">
-  <div class="topbar">
-    <div>
-      <h1 class="page-title">Apply for Loan</h1>
-      <p class="text-muted">Fill in your details to submit a new loan application.</p>
+<div class="apply-loan-page">
+  <section class="hero-card">
+    <div class="hero-copy">
+      <p class="eyebrow">Customer Loan Portal</p>
+      <h1>Apply for Loan</h1>
+      <p class="hero-subtitle">
+        Fill in your details and review your live eligibility insights before final submission.
+      </p>
     </div>
 
-    <button class="btn-secondary" routerLink="/customer-dashboard">Back</button>
-  </div>
-
-  <div class="section-card">
-    <form>
-      <div class="input-row">
-        <div class="form-group">
-          <label class="form-label">Loan Type</label>
-          <input class="form-control" type="text" [(ngModel)]="loanData.loanType" name="loanType" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Amount</label>
-          <input class="form-control" type="number" [(ngModel)]="loanData.amount" name="amount" />
-        </div>
+    <div class="hero-badges">
+      <div class="hero-badge">
+        <span>Status</span>
+        <strong>{{ formStatus }}</strong>
       </div>
 
-      <div class="input-row">
-        <div class="form-group">
-          <label class="form-label">Purpose</label>
-          <input class="form-control" type="text" [(ngModel)]="loanData.purpose" name="purpose" />
-        </div>
+      <div class="hero-badge">
+        <span>Completion</span>
+        <strong>{{ completionPercent }}%</strong>
+      </div>
+    </div>
+  </section>
 
-        <div class="form-group">
-          <label class="form-label">Duration (Months)</label>
-          <input class="form-control" type="number" [(ngModel)]="loanData.durationMonths" name="durationMonths" />
+  <section class="content-grid">
+    <div class="form-card">
+      <div class="card-header">
+        <div>
+          <h2>Loan Application</h2>
+          <p>Enter your details carefully. Required fields are validated instantly.</p>
         </div>
+        <div class="secure-pill">Secure Form</div>
       </div>
 
-      <div class="input-row">
-        <div class="form-group">
-          <label class="form-label">Annual Income</label>
-          <input class="form-control" type="number" [(ngModel)]="loanData.annualIncome" name="annualIncome" />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Employment Years</label>
-          <input class="form-control" type="number" [(ngModel)]="loanData.employmentYears" name="employmentYears" />
-        </div>
+      <div *ngIf="successMessage" class="alert success-alert">
+        {{ successMessage }}
       </div>
 
-      <div class="input-row">
-        <div class="form-group">
-          <label class="form-label">Age</label>
-          <input class="form-control" type="number" [(ngModel)]="loanData.age" name="age" />
-        </div>
-      </div>
-
-      <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;">
-        <button type="button" class="btn-primary" (click)="applyLoan()" [disabled]="isSubmitting">
-          {{ isSubmitting ? 'Submitting...' : 'Submit' }}
-        </button>
-      </div>
-
-      <p *ngIf="message" style="color: #15803d; margin-top: 16px; font-weight: 600;">
-        {{ message }}
-      </p>
-
-      <p *ngIf="errorMessage" style="color: #b91c1c; margin-top: 16px; font-weight: 600;">
+      <div *ngIf="errorMessage" class="alert error-alert">
         {{ errorMessage }}
-      </p>
-    </form>
-  </div>
+      </div>
+
+      <form (ngSubmit)="submitLoan()" class="loan-form">
+        <div class="form-grid">
+          <div class="field">
+            <label for="loanType">Loan Type</label>
+            <select
+              id="loanType"
+              [(ngModel)]="loanType"
+              name="loanType"
+              [class.invalid]="showValidation && !isLoanTypeValid"
+            >
+              <option value="" disabled>Select Loan Type</option>
+              <option>Personal Loan</option>
+              <option>Home Loan</option>
+              <option>Education Loan</option>
+              <option>Vehicle Loan</option>
+              <option>Business Loan</option>
+            </select>
+            <small class="helper-text">Select the category that best matches your requirement.</small>
+          </div>
+
+          <div class="field">
+            <label for="amount">Loan Amount</label>
+            <input
+              id="amount"
+              type="number"
+              [(ngModel)]="amount"
+              name="amount"
+              placeholder="Enter requested amount"
+              [class.invalid]="!!amountError"
+            />
+            <small class="helper-text" *ngIf="!amountError">Typical range: ₹10,000 to ₹50,00,000</small>
+            <small class="error-text" *ngIf="amountError">{{ amountError }}</small>
+          </div>
+
+          <div class="field">
+            <label for="purpose">Purpose</label>
+            <input
+              id="purpose"
+              type="text"
+              [(ngModel)]="purpose"
+              name="purpose"
+              placeholder="Education, medical, travel, business..."
+              [class.invalid]="!!purposeError"
+            />
+            <small class="helper-text" *ngIf="!purposeError">Tell us why you need this loan.</small>
+            <small class="error-text" *ngIf="purposeError">{{ purposeError }}</small>
+          </div>
+
+          <div class="field">
+            <label for="durationMonths">Duration (Months)</label>
+            <input
+              id="durationMonths"
+              type="number"
+              [(ngModel)]="durationMonths"
+              name="durationMonths"
+              placeholder="Enter repayment duration"
+              [class.invalid]="!!durationError"
+            />
+            <small class="helper-text" *ngIf="!durationError">Choose a realistic repayment period.</small>
+            <small class="error-text" *ngIf="durationError">{{ durationError }}</small>
+          </div>
+
+          <div class="field">
+            <label for="annualIncome">Annual Income</label>
+            <input
+              id="annualIncome"
+              type="number"
+              [(ngModel)]="annualIncome"
+              name="annualIncome"
+              placeholder="Enter annual income"
+              [class.invalid]="!!incomeError"
+            />
+            <small class="helper-text" *ngIf="!incomeError">Used to estimate repayment capacity.</small>
+            <small class="error-text" *ngIf="incomeError">{{ incomeError }}</small>
+          </div>
+
+          <div class="field">
+            <label for="employmentYears">Employment Years</label>
+            <input
+              id="employmentYears"
+              type="number"
+              [(ngModel)]="employmentYears"
+              name="employmentYears"
+              placeholder="Enter years of employment"
+              [class.invalid]="!!employmentYearsError"
+            />
+            <small class="helper-text" *ngIf="!employmentYearsError">Job stability helps improve eligibility.</small>
+            <small class="error-text" *ngIf="employmentYearsError">{{ employmentYearsError }}</small>
+          </div>
+
+          <div class="field">
+            <label for="age">Age</label>
+            <input
+              id="age"
+              type="number"
+              [(ngModel)]="age"
+              name="age"
+              placeholder="Enter age"
+              [class.invalid]="!!ageError"
+            />
+            <small class="helper-text" *ngIf="!ageError">Applicant must usually be 18 years or older.</small>
+            <small class="error-text" *ngIf="ageError">{{ ageError }}</small>
+          </div>
+        </div>
+
+        <div class="trust-row">
+          <div class="trust-item">Encrypted submission</div>
+          <div class="trust-item">Eligibility preview only</div>
+          <div class="trust-item">Officer review after submission</div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="primary-btn"
+            [disabled]="isSubmitting || !isFormValid()"
+          >
+            <span class="btn-glow"></span>
+            {{ isSubmitting ? 'Submitting...' : 'Submit Application' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="insights-column">
+      <div class="insight-card highlight-card">
+        <div class="insight-top">
+          <h3>Eligibility Score</h3>
+          <span class="risk-badge" [ngClass]="riskBadgeClass">{{ riskLevel }}</span>
+        </div>
+
+        <div class="score-wrap">
+          <svg class="score-chart" viewBox="0 0 140 140">
+            <circle class="score-bg" cx="70" cy="70" r="52"></circle>
+            <circle
+              class="score-progress"
+              cx="70"
+              cy="70"
+              r="52"
+              [style.stroke-dashoffset]="scoreStrokeOffset"
+            ></circle>
+          </svg>
+
+          <div class="score-center">
+            <div class="score-value">{{ eligibilityScore > 0 ? eligibilityScore : '--' }}</div>
+            <div class="score-label">
+              {{ eligibilityScore > 0 ? 'out of 100' : 'Fill form to calculate' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="insight-grid">
+          <div class="mini-insight">
+            <span>Decision</span>
+            <strong>{{ recommendedDecision }}</strong>
+          </div>
+          <div class="mini-insight">
+            <span>Repayment Fit</span>
+            <strong>{{ affordabilityBand }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-top">
+          <h3>EMI Preview</h3>
+          <span class="soft-tag">Live Estimate</span>
+        </div>
+
+        <div class="metric-list">
+          <div class="metric-row">
+            <span>Estimated Interest</span>
+            <strong>{{ estimatedInterestRate }}%</strong>
+          </div>
+          <div class="metric-row">
+            <span>Estimated EMI</span>
+            <strong>{{ formatCurrency(estimatedEmi) }}/month</strong>
+          </div>
+          <div class="metric-row">
+            <span>Total Repayment</span>
+            <strong>{{ formatCurrency(totalRepayment) }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-card">
+        <div class="insight-top">
+          <h3>System Note</h3>
+          <span class="soft-tag">Reviewer Friendly</span>
+        </div>
+
+        <div class="note-box">
+          Eligibility is estimated using loan amount, repayment duration, annual income,
+          employment history, and applicant age. Final approval is subject to officer verification
+          and policy checks.
+        </div>
+      </div>
+    </div>
+  </section>
 </div>

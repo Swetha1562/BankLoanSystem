@@ -38,19 +38,27 @@ public class AuthController : ControllerBase
             return BadRequest("Role is required.");
 
         var normalizedEmail = dto.Email.Trim().ToLower();
+        var normalizedRole = dto.Role.Trim();
 
         if (_context.Users.Any(x => x.Email.ToLower() == normalizedEmail))
             return BadRequest("Email already exists.");
 
-        if (dto.Role != "Customer" && dto.Role != "Officer")
+        if (normalizedRole != "Customer" && normalizedRole != "Officer")
             return BadRequest("Role must be either Customer or Officer.");
+
+        if (!IsStrongPassword(dto.Password))
+        {
+            return BadRequest(
+                "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+            );
+        }
 
         var user = new User
         {
             FullName = dto.FullName.Trim(),
             Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-            Role = dto.Role.Trim()
+            Role = normalizedRole
         };
 
         _context.Users.Add(user);
@@ -91,5 +99,14 @@ public class AuthController : ControllerBase
             email = user.Email,
             fullName = user.FullName
         });
+    }
+
+    private bool IsStrongPassword(string password)
+    {
+        var regex = new System.Text.RegularExpressions.Regex(
+            @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#^()_\-+=]).{8,}$"
+        );
+
+        return regex.IsMatch(password);
     }
 }

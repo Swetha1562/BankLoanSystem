@@ -1,0 +1,25 @@
+<header class="navbar">
+  <div class="navbar-container">
+
+    <!-- BRAND -->
+    <a routerLink="/" fragment="home" class="brand">
+      <img src="assets/logo.png" alt="StratosLend Logo" class="logo logo-zoom" />
+
+      <div class="brand-text">
+        <span class="brand-title">StratosLend</span>
+        <span class="brand-subtitle">Smart Lending. Trusted Decisions.</span>
+      </div>
+    </a>
+
+    <!-- NAV -->
+    <nav class="nav-links">
+      <a routerLink="/" fragment="home">Home</a>
+      <a routerLink="/" fragment="about">About</a>
+      <a routerLink="/" fragment="contact">Contact</a>
+      <a routerLink="/login">Login</a>
+      <a routerLink="/register" class="register-btn">Sign Up</a>
+    </nav>
+    <button class="logout-btn" (click)="logout()">Logout</button>
+
+  </div>
+</header>
