@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Http;
+ 
 namespace BankLoanSystem.DTOs;
-
+ 
 public class ApplyLoanDto
 {
     public string LoanType { get; set; } = string.Empty;
@@ -9,4 +11,6 @@ public class ApplyLoanDto
     public decimal AnnualIncome { get; set; }
     public int EmploymentYears { get; set; }
     public int Age { get; set; }
+ 
+    public IFormFile? SalarySlipDocument { get; set; }
 }

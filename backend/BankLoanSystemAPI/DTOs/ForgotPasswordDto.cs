@@ -1,4 +1,7 @@
-public class ForgotPasswordDto
+namespace BankLoanSystem.DTOs
 {
-    public string Email { get; set; } = string.Empty;
+    public class ForgotPasswordDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
 }

@@ -37,6 +37,11 @@ public class ApplicationDbContext : DbContext
             .HasPrecision(18, 2);
 
         modelBuilder.Entity<LoanApplication>()
+            .Property(l => l.SalarySlipFilePath)
+            .HasMaxLength(500);
+ 
+
+        modelBuilder.Entity<LoanApplication>()
             .HasOne(l => l.User)
             .WithMany()
             .HasForeignKey(l => l.UserId)
