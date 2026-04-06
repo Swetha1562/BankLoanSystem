@@ -1,12 +1,12 @@
 <div class="auth-page">
   <div class="auth-left">
-    <h1>StratosLend</h1>
+    <h1>Astra Bank</h1>
     <p>
       Create your account to apply, track, and manage loans securely through a
       modern loan management platform.
     </p>
   </div>
-
+ 
   <div class="auth-right">
     <div class="auth-card">
       <div class="form-header">
@@ -14,15 +14,15 @@
         <h2>Create Account</h2>
         <p>Register to access the loan system.</p>
       </div>
-
+ 
       <div class="alert success-alert" *ngIf="successMessage">
         {{ successMessage }}
       </div>
-
+ 
       <div class="alert error-alert" *ngIf="errorMessage">
         {{ errorMessage }}
       </div>
-
+ 
       <form (ngSubmit)="register()" #registerForm="ngForm" novalidate>
         <div class="form-group">
           <label class="form-label">Full Name</label>
@@ -40,7 +40,7 @@
             Full name is required.
           </small>
         </div>
-
+ 
         <div class="form-group">
           <label class="form-label">Email</label>
           <input
@@ -49,6 +49,7 @@
             [(ngModel)]="registerData.email"
             name="email"
             required
+            email
             #email="ngModel"
             [class.invalid]="submitted && email.invalid"
             placeholder="Enter your email"
@@ -57,10 +58,10 @@
             Please enter a valid email.
           </small>
         </div>
-
+ 
         <div class="form-group">
           <label class="form-label">Password</label>
-
+ 
           <div class="password-wrapper">
             <input
               class="form-control"
@@ -69,10 +70,10 @@
               name="password"
               required
               #password="ngModel"
-              [class.invalid]="submitted && (password.invalid || !isStrongPassword(registerData.password))"
+              [class.invalid]="submitted && (!registerData.password.trim() || !isStrongPassword(registerData.password))"
               placeholder="Enter a strong password"
             />
-
+ 
             <button
               type="button"
               class="toggle-password"
@@ -81,14 +82,14 @@
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
-
+ 
           <small
             class="field-error"
             *ngIf="submitted && !registerData.password.trim()"
           >
             Password is required.
           </small>
-
+ 
           <small
             class="field-error"
             *ngIf="registerData.password && !isStrongPassword(registerData.password)"
@@ -97,27 +98,38 @@
             lowercase, number, and special character.
           </small>
         </div>
-
+ 
         <div class="form-group">
           <label class="form-label">Confirm Password</label>
-          <input
-            class="form-control"
-            type="password"
-            [(ngModel)]="registerData.confirmPassword"
-            name="confirmPassword"
-            required
-            #confirmPassword="ngModel"
-            [class.invalid]="submitted && confirmPassword.invalid"
-            placeholder="Re-enter your password"
-          />
-
+ 
+          <div class="password-wrapper">
+            <input
+              class="form-control"
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              [(ngModel)]="registerData.confirmPassword"
+              name="confirmPassword"
+              required
+              #confirmPassword="ngModel"
+              [class.invalid]="submitted && confirmPassword.invalid"
+              placeholder="Re-enter your password"
+            />
+ 
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="showConfirmPassword = !showConfirmPassword"
+            >
+              {{ showConfirmPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+ 
           <small
             class="field-error"
             *ngIf="submitted && confirmPassword.invalid"
           >
             Confirm password is required.
           </small>
-
+ 
           <small
             class="field-error"
             *ngIf="
@@ -128,8 +140,8 @@
             Passwords do not match.
           </small>
         </div>
-
-        <div class="form-group">
+ 
+        <!--<div class="form-group">
           <label class="form-label">Role</label>
           <select
             class="form-select"
@@ -140,20 +152,19 @@
             <option value="Customer">Customer</option>
             <option value="Officer">Officer</option>
           </select>
-        </div>
-
+        </div>-->
+ 
         <button
           type="submit"
           class="btn-primary"
           [disabled]="isLoading"
-          style="width: 100%; margin-top: 8px;"
         >
           {{ isLoading ? 'Creating Account...' : 'Register Now' }}
         </button>
       </form>
-
+ 
       <div class="form-footer">
-        <p>Already have an account?</p>
+        <span>Already have an account?</span>
         <a routerLink="/login">Login here</a>
       </div>
     </div>

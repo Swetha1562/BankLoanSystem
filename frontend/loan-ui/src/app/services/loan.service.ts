@@ -1,93 +1,196 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-
-export interface LoanApplication {
-  id: number;
-  loanType: string;
-  amount: number;
-  purpose: string;
-  durationMonths: number;
-  annualIncome: number;
-  existingLiabilities?: number;
-  status: string;
-  createdAt?: string;
-  riskLevel?: string;
-  eligibilityScore?: number;
-  recommendedDecision?: string;
-  rowVersion?: string;
-  remarks?: string;
-}
-
-export interface LoanActionResponse {
-  message: string;
-}
-
+import { Observable, Subject, tap } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
+ 
 @Injectable({
   providedIn: 'root'
 })
 export class LoanService {
-  private baseUrl = 'http://localhost:5000/api/Loan';
-
-  constructor(private http: HttpClient) {}
-
-  private getAuthHeaders(): HttpHeaders {
+  private apiUrl = 'http://localhost:5000/api/Loan';
+  private dashboardUrl = 'http://localhost:5000/api/Dashboard';
+  private hubUrl = 'http://localhost:5000/notificationHub';
+ 
+  private hubConnection?: signalR.HubConnection;
+ 
+  private loanStatusChangedSource = new Subject<void>();
+  loanStatusChanged$ = this.loanStatusChangedSource.asObservable();
+ 
+  constructor(private http: HttpClient) {
+    this.startConnection();
+  }
+ 
+  private getHeaders(): { headers: HttpHeaders } {
     const token = localStorage.getItem('token') || '';
-    return new HttpHeaders({
-      Authorization: `Bearer ${token}`
-    });
+ 
+    return {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    };
   }
-
-  applyLoan(data: unknown): Observable<string> {
-    return this.http.post(`${this.baseUrl}/apply`, data, {
-      headers: this.getAuthHeaders(),
-      responseType: 'text'
-    });
+ 
+  getMyLoans(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/myloans`, this.getHeaders());
   }
-
-  getMyLoans(): Observable<LoanApplication[]> {
-    return this.http.get<LoanApplication[]>(`${this.baseUrl}/myloans`, {
-      headers: this.getAuthHeaders()
-    });
+ 
+  getAllLoans(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}`, this.getHeaders());
   }
-
-  getAllLoans(): Observable<LoanApplication[]> {
-    return this.http.get<LoanApplication[]>(`${this.baseUrl}`, {
-      headers: this.getAuthHeaders()
-    });
+ 
+  getLoanById(id: number): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/${id}`, this.getHeaders());
   }
-
-  getLoanById(id: number): Observable<LoanApplication> {
-    return this.http.get<LoanApplication>(`${this.baseUrl}/${id}`, {
-      headers: this.getAuthHeaders()
-    });
+ 
+  getCustomerSummary(): Observable<any> {
+    return this.http.get<any>(`${this.dashboardUrl}/customer-summary`, this.getHeaders());
   }
-
-  approveLoan(
-    loanId: number,
-    remarks: string,
-    rowVersion?: string
-  ): Observable<LoanActionResponse> {
-    return this.http.post<LoanActionResponse>(
-      `${this.baseUrl}/${loanId}/approve`,
-      { remarks, rowVersion },
-      {
-        headers: this.getAuthHeaders()
-      }
+ 
+  getOfficerSummary(): Observable<any> {
+    return this.http.get<any>(`${this.dashboardUrl}/officer-summary`, this.getHeaders());
+  }
+ 
+  applyLoan(data: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/apply`, data, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
     );
   }
-
-  rejectLoan(
-    loanId: number,
-    remarks: string,
-    rowVersion?: string
-  ): Observable<LoanActionResponse> {
-    return this.http.post<LoanActionResponse>(
-      `${this.baseUrl}/${loanId}/reject`,
-      { remarks, rowVersion },
-      {
-        headers: this.getAuthHeaders()
-      }
+ 
+  approveLoan(id: number, remarks: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('Remarks', remarks);
+ 
+    return this.http.post<any>(`${this.apiUrl}/${id}/approve`, formData, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
     );
+  }
+ 
+  rejectLoan(id: number, remarks: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('Remarks', remarks);
+ 
+    return this.http.post<any>(`${this.apiUrl}/${id}/reject`, formData, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
+    );
+  }
+ 
+  notifyLoanStatusChanged(): void {
+    this.loanStatusChangedSource.next();
+  }
+ 
+  startConnection(): void {
+    if (this.hubConnection) return;
+ 
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(this.hubUrl, {
+        accessTokenFactory: () => localStorage.getItem('token') || ''
+      })
+      .withAutomaticReconnect()
+      .build();
+ 
+    this.hubConnection.on('LoanStatusUpdated', () => {
+      this.notifyLoanStatusChanged();
+    });
+ 
+    this.hubConnection
+      .start()
+      .then(() => console.log('SignalR connected'))
+      .catch(err => console.error('SignalR error:', err));
   }
 }
+ 
+
+
+
+
+
+
+
+
+
+/*import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable, Subject, tap } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
+ 
+@Injectable({
+  providedIn: 'root'
+})
+export class LoanService {
+  private apiUrl = 'http://localhost:5000/api/Loan';
+  private hubUrl = 'http://localhost:5000/notificationHub';
+ 
+  private hubConnection?: signalR.HubConnection;
+  private loanStatusChangedSource = new Subject<void>();
+  loanStatusChanged$ = this.loanStatusChangedSource.asObservable();
+ 
+  constructor(private http: HttpClient) {
+    this.startConnection();
+  }
+ 
+  private getHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('token') || '';
+ 
+    return {
+      headers: new HttpHeaders({
+        Authorization: `Bearer ${token}`
+      })
+    };
+  }
+ 
+  getMyLoans(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/myloans`, this.getHeaders());
+  }
+ 
+  getAllLoans(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}`, this.getHeaders());
+  }
+ 
+  applyLoan(data: FormData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/apply`, data, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
+    );
+  }
+ 
+  approveLoan(id: number, remarks: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('Remarks', remarks);
+ 
+    return this.http.post<any>(`${this.apiUrl}/${id}/approve`, formData, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
+    );
+  }
+ 
+  rejectLoan(id: number, remarks: string): Observable<any> {
+    const formData = new FormData();
+    formData.append('Remarks', remarks);
+ 
+    return this.http.post<any>(`${this.apiUrl}/${id}/reject`, formData, this.getHeaders()).pipe(
+      tap(() => this.notifyLoanStatusChanged())
+    );
+  }
+ 
+  notifyLoanStatusChanged(): void {
+    this.loanStatusChangedSource.next();
+  }
+ 
+  startConnection(): void {
+    if (this.hubConnection) return;
+ 
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(this.hubUrl, {
+        accessTokenFactory: () => localStorage.getItem('token') || ''
+      })
+      .withAutomaticReconnect()
+      .build();
+ 
+    this.hubConnection.on('LoanStatusUpdated', () => {
+      this.notifyLoanStatusChanged();
+    });
+ 
+    this.hubConnection
+      .start()
+      .then(() => console.log('SignalR connected'))
+      .catch(err => console.error('SignalR error:', err));
+  }
+}*/

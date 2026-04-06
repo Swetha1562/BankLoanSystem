@@ -1,42 +1,86 @@
-<div class="page-container">
-
-  <div class="topbar">
-    <div>
-      <h1 class="page-title">Customer Dashboard</h1>
-      <p class="text-muted">Track your loan activity and decisions</p>
+<div class="page-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      
     </div>
-
-    <div class="topbar-actions">
-      <button class="btn-primary" routerLink="/apply-loan">Apply Loan</button>
-      <button class="btn-secondary" routerLink="/my-loans">My Loans</button>
-      <button class="btn-danger" (click)="logout()">Logout</button>
-    </div>
-  </div>
-
-  <div class="metric-grid">
-    <div class="metric-card">
-      <h4>Total Loans</h4>
-      <div class="metric-value">{{ totalLoans }}</div>
-      <div class="metric-note">Applications submitted</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Approved</h4>
-      <div class="metric-value">{{ approvedLoans }}</div>
-      <div class="metric-note">Successfully approved</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Pending</h4>
-      <div class="metric-value">{{ pendingLoans }}</div>
-      <div class="metric-note">Under review</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Rejected</h4>
-      <div class="metric-value">{{ rejectedLoans }}</div>
-      <div class="metric-note">Declined applications</div>
-    </div>
-  </div>
-
+ 
+    <nav class="sidebar-nav">
+      <a
+        class="nav-link"
+        routerLink="/customer-dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
+ 
+      <a
+        class="nav-link"
+        routerLink="/apply-loan"
+        routerLinkActive="active"
+      >
+        Apply Loan
+      </a>
+ 
+      <a
+        class="nav-link"
+        routerLink="/my-loans"
+        routerLinkActive="active"
+      >
+        My Loans
+      </a>
+    </nav>
+  </aside>
+ 
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        
+      </div>
+ 
+      
+    </header>
+ 
+    <section class="dashboard-header">
+      <div>
+        <h1>Customer Dashboard</h1>
+        <p>Track your loan activity and decisions</p>
+      </div>
+ 
+      <div class="dashboard-actions">
+        <button class="btn-primary" routerLink="/apply-loan">Apply Loan</button>
+        <button class="btn-secondary" routerLink="/my-loans">My Loans</button>
+      </div>
+    </section>
+ 
+    <section class="stats-grid">
+      <div class="stat-card clickable" (click)="goToFilteredLoans('all')">
+        <h3>Total Loans</h3>
+        <div class="stat-value">{{ totalLoans }}</div>
+        <p>Applications submitted</p>
+      </div>
+ 
+      <div class="stat-card clickable" (click)="goToFilteredLoans('approved')">
+        <h3>Approved</h3>
+        <div class="stat-value">{{ approvedLoans }}</div>
+        <p>Successfully approved</p>
+      </div>
+ 
+      <div class="stat-card clickable" (click)="goToFilteredLoans('pending')">
+        <h3>Pending</h3>
+        <div class="stat-value">{{ pendingLoans }}</div>
+        <p>Under review</p>
+      </div>
+ 
+      <div class="stat-card clickable" (click)="goToFilteredLoans('rejected')">
+        <h3>Rejected</h3>
+        <div class="stat-value">{{ rejectedLoans }}</div>
+        <p>Declined applications</p>
+      </div>
+    </section>
+ 
+    <section *ngIf="errorMessage" class="message error-message">
+      {{ errorMessage }}
+    </section>
+  </main>
 </div>

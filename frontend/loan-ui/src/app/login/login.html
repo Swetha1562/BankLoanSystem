@@ -1,27 +1,25 @@
 <div class="auth-page">
   <div class="auth-left">
-    <h1>StratosLend</h1>
+    <h1>Astra Bank</h1>
     <p>
       A smart loan management platform for customers and officers to apply,
       review, and track loan decisions with ease.
     </p>
   </div>
-
+ 
   <div class="auth-right">
     <div class="auth-card">
-
       <div class="form-header">
         <span class="mini-badge">Login</span>
         <h2>Welcome Back</h2>
         <p>Access your dashboard securely and continue your workflow.</p>
       </div>
-
+ 
       <div class="alert error-alert" *ngIf="message">
         {{ message }}
       </div>
-
+ 
       <form (ngSubmit)="login()" #loginForm="ngForm" novalidate>
-
         <div class="form-group">
           <label class="form-label">Email</label>
           <input
@@ -38,10 +36,9 @@
             Please enter a valid email address.
           </small>
         </div>
-
+ 
         <div class="form-group">
           <label class="form-label">Password</label>
-
           <div class="password-wrapper">
             <input
               class="form-control"
@@ -53,7 +50,6 @@
               [class.invalid]="loginForm.submitted && passwordRef.invalid"
               placeholder="Enter your password"
             />
-
             <button
               type="button"
               class="toggle-password"
@@ -62,26 +58,59 @@
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
-
           <small class="field-error" *ngIf="loginForm.submitted && passwordRef.invalid">
             Password is required.
           </small>
         </div>
-
-        <button
-          type="submit"
-          class="btn-primary"
-          style="width: 100%;"
-        >
+ 
+        <button type="submit" class="btn-primary" style="width: 100%;">
           Login
         </button>
-
+ 
         <div class="form-footer">
-          <p>New to StratosLend?</p>
-          <a routerLink="/register">Create an account</a>
+          <a class="left-link" href="javascript:void(0)" (click)="openForgotPopup()">
+            Forgot Password?
+          </a>
+ 
+          <a class="right-link" routerLink="/register">
+            Signup
+          </a>
         </div>
-
       </form>
     </div>
   </div>
 </div>
+ 
+<div class="modal-backdrop" *ngIf="showForgotPopup">
+  <div class="forgot-modal">
+    <div class="forgot-header">
+      <h3>Forgot Password</h3>
+      <button type="button" class="close-btn" (click)="closeForgotPopup()">×</button>
+    </div>
+ 
+    <p class="forgot-text">
+      Enter your registered email to continue to password reset.
+    </p>
+ 
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input
+        class="form-control"
+        type="email"
+        [(ngModel)]="forgotEmail"
+        name="forgotEmail"
+        placeholder="Enter your registered email"
+      />
+    </div>
+ 
+    <div class="alert error-alert" *ngIf="forgotError">
+      {{ forgotError }}
+    </div>
+ 
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" (click)="closeForgotPopup()">Cancel</button>
+      <button type="button" class="btn-primary" (click)="verifyForgotEmail()">Verify</button>
+    </div>
+  </div>
+</div>
+ 

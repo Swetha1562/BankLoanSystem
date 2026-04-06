@@ -1,21 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { OfficerDashboard } from './officer-dashboard';
-
-describe('OfficerDashboard', () => {
-  let component: OfficerDashboard;
-  let fixture: ComponentFixture<OfficerDashboard>;
-
+import { OfficerDashboardComponent } from './officer-dashboard';
+ 
+describe('OfficerDashboardComponent', () => {
+  let component: OfficerDashboardComponent;
+  let fixture: ComponentFixture<OfficerDashboardComponent>;
+ 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OfficerDashboard],
+      imports: [OfficerDashboardComponent]
     }).compileComponents();
-
-    fixture = TestBed.createComponent(OfficerDashboard);
+ 
+    fixture = TestBed.createComponent(OfficerDashboardComponent);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    await fixture.detectChanges();
   });
-
+ 
   it('should create', () => {
     expect(component).toBeTruthy();
   });

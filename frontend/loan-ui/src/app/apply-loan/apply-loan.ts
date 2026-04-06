@@ -1,10 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { finalize } from 'rxjs/operators';
 import { LoanService } from '../services/loan.service';
-
+import { AuthService } from '../services/auth.service';
+ 
 @Component({
   selector: 'app-apply-loan',
   standalone: true,
@@ -12,311 +12,575 @@ import { LoanService } from '../services/loan.service';
   templateUrl: './apply-loan.html',
   styleUrl: './apply-loan.css'
 })
-export class ApplyLoanComponent {
-  loanType = '';
-  amount: number | null = null;
-  purpose = '';
-  durationMonths: number | null = null;
-  annualIncome: number | null = null;
-  employmentYears: number | null = null;
-  age: number | null = null;
-
-  isSubmitting = false;
+export class ApplyLoanComponent implements OnInit {
+  loanForm = {
+    loanType: '',
+    amount: null as number | null,
+    purpose: '',
+    durationMonths: null as number | null,
+    annualIncome: null as number | null,
+    employmentYears: null as number | null,
+    age: null as number | null
+  };
+ 
+  selectedFile: File | null = null;
+  selectedFileName = '';
+ 
   successMessage = '';
   errorMessage = '';
-  showValidation = false;
-
+ 
+  eligibilityScore = 0;
+  recommendedDecision = 'N/A';
+  riskLevel = 'N/A';
+  repaymentFit = 'N/A';
+  interestRate = 'N/A';
+  estimatedEmi = 'N/A';
+  totalRepayment = 'N/A';
+ 
+  creditScore = 700;
+  existingLiabilities = 0;
+ 
   constructor(
     private loanService: LoanService,
+    private authService: AuthService,
     private router: Router
   ) {}
-
-  submitLoan(): void {
-    if (this.isSubmitting) return;
-
-    this.successMessage = '';
-    this.errorMessage = '';
-    this.showValidation = true;
-
-    if (!this.isFormValid()) {
-      this.errorMessage = 'Please correct the highlighted fields before submitting.';
+ 
+  ngOnInit(): void {
+    this.calculatePreview();
+  }
+ 
+  onFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+ 
+    if (!file) {
+      this.selectedFile = null;
+      this.selectedFileName = '';
+      this.calculatePreview();
       return;
     }
-
-    const payload = {
-      loanType: this.loanType,
-      amount: Number(this.amount),
-      purpose: this.purpose,
-      durationMonths: Number(this.durationMonths),
-      annualIncome: Number(this.annualIncome),
-      employmentYears: Number(this.employmentYears),
-      age: Number(this.age)
-    };
-
-    this.isSubmitting = true;
-
-    this.loanService
-      .applyLoan(payload)
-      .pipe(finalize(() => (this.isSubmitting = false)))
-      .subscribe({
-        next: (res: string) => {
-          this.successMessage = res || 'Loan application submitted successfully.';
-          this.resetForm();
-
-          setTimeout(() => {
-            this.router.navigate(['/my-loans']);
-          }, 1200);
-        },
-        error: (err: any) => {
-          this.errorMessage =
-            typeof err?.error === 'string'
-              ? err.error
-              : err?.error?.message || 'Loan submission failed. Please try again.';
-        }
-      });
+ 
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.errorMessage = 'Please upload salary slip in PDF format only.';
+      this.selectedFile = null;
+      this.selectedFileName = '';
+      this.calculatePreview();
+      return;
+    }
+ 
+    this.selectedFile = file;
+    this.selectedFileName = file.name;
+    this.errorMessage = '';
+    this.calculatePreview();
   }
-
-  resetForm(): void {
-    this.loanType = '';
-    this.amount = null;
-    this.purpose = '';
-    this.durationMonths = null;
-    this.annualIncome = null;
-    this.employmentYears = null;
-    this.age = null;
-    this.showValidation = false;
+ 
+  removeFile(): void {
+    this.selectedFile = null;
+    this.selectedFileName = '';
+    this.calculatePreview();
   }
-
-  isFormValid(): boolean {
-    return (
-      this.isLoanTypeValid &&
-      this.isAmountValid &&
-      this.isPurposeValid &&
-      this.isDurationValid &&
-      this.isIncomeValid &&
-      this.isEmploymentYearsValid &&
-      this.isAgeValid
-    );
+ 
+  calculatePreview(): void {
+    const amount = Number(this.loanForm.amount || 0);
+    const durationMonths = Number(this.loanForm.durationMonths || 0);
+    const annualIncome = Number(this.loanForm.annualIncome || 0);
+    const employmentYears = Number(this.loanForm.employmentYears || 0);
+    const age = Number(this.loanForm.age || 0);
+    const loanType = this.loanForm.loanType || '';
+ 
+    let interest = 12;
+ 
+    switch (loanType) {
+      case 'Home Loan':
+        interest = 8.75;
+        break;
+      case 'Vehicle Loan':
+        interest = 9.5;
+        break;
+      case 'Education Loan':
+        interest = 10.75;
+        break;
+      case 'Personal Loan':
+        interest = 12.25;
+        break;
+      default:
+        interest = 12;
+        break;
+    }
+ 
+    this.interestRate = `${interest.toFixed(2)}%`;
+ 
+    let score = 0;
+ 
+    switch (loanType) {
+      case 'Home Loan':
+        score += 18;
+        break;
+      case 'Education Loan':
+        score += 14;
+        break;
+      case 'Vehicle Loan':
+        score += 12;
+        break;
+      case 'Personal Loan':
+        score += 8;
+        break;
+    }
+ 
+    if (age >= 23 && age <= 55) score += 15;
+    else if (age >= 21 && age <= 58) score += 12;
+    else if (age > 18 && age <= 60) score += 8;
+ 
+    if (annualIncome >= 1200000) score += 22;
+    else if (annualIncome >= 900000) score += 18;
+    else if (annualIncome >= 700000) score += 15;
+    else if (annualIncome >= 500000) score += 12;
+    else if (annualIncome >= 350000) score += 7;
+    else if (annualIncome >= 250000) score += 3;
+ 
+    if (employmentYears >= 8) score += 18;
+    else if (employmentYears >= 5) score += 15;
+    else if (employmentYears >= 3) score += 10;
+    else if (employmentYears >= 1) score += 5;
+ 
+    const loanToIncomeRatio = annualIncome > 0 ? amount / annualIncome : 99;
+ 
+    if (loanToIncomeRatio <= 0.2) score += 18;
+    else if (loanToIncomeRatio <= 0.5) score += 15;
+    else if (loanToIncomeRatio <= 1.0) score += 10;
+    else if (loanToIncomeRatio <= 1.5) score += 4;
+    else score -= 10;
+ 
+    if (durationMonths >= 36 && durationMonths <= 120) score += 10;
+    else if (durationMonths >= 24) score += 7;
+    else if (durationMonths >= 12) score += 4;
+    else if (durationMonths > 0) score += 1;
+ 
+    if (this.selectedFile) score += 5;
+ 
+    const monthlyIncome = annualIncome > 0 ? annualIncome / 12 : 0;
+    const monthlyRate = interest / 12 / 100;
+ 
+    let emi = 0;
+    if (amount > 0 && durationMonths > 0 && monthlyRate > 0) {
+      const factor = Math.pow(1 + monthlyRate, durationMonths);
+      emi = (amount * monthlyRate * factor) / (factor - 1);
+    }
+ 
+    const emiRatio = monthlyIncome > 0 ? emi / monthlyIncome : 1;
+ 
+    if (emiRatio <= 0.2) score += 20;
+    else if (emiRatio <= 0.3) score += 16;
+    else if (emiRatio <= 0.4) score += 10;
+    else if (emiRatio <= 0.5) score += 3;
+    else score -= 15;
+ 
+    if (loanToIncomeRatio > 1.5) score -= 8;
+    if (emiRatio > 0.45) score -= 10;
+    if (emiRatio > 0.55) score -= 10;
+    if (annualIncome < 400000 && amount > 500000) score -= 10;
+    if (employmentYears < 2 && amount > 300000) score -= 8;
+    if (age < 21 || age > 60) score -= 12;
+ 
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    this.eligibilityScore = score;
+ 
+    if (score >= 85) {
+      this.riskLevel = 'Low';
+      this.recommendedDecision = 'Likely Approve';
+      this.repaymentFit = 'Comfortable';
+    } else if (score >= 65) {
+      this.riskLevel = 'Moderate';
+      this.recommendedDecision = 'Review';
+      this.repaymentFit = 'Manageable';
+    } else if (score >= 40) {
+      this.riskLevel = 'High';
+      this.recommendedDecision = 'Needs Review';
+      this.repaymentFit = 'Risky';
+    } else {
+      this.riskLevel = 'Very High';
+      this.recommendedDecision = 'Likely Reject';
+      this.repaymentFit = 'Risky';
+    }
+ 
+    this.estimatedEmi =
+      emi > 0 ? `₹${Math.round(emi).toLocaleString()}/month` : 'N/A';
+ 
+    this.totalRepayment =
+      emi > 0 && durationMonths > 0
+        ? `₹${Math.round(emi * durationMonths).toLocaleString()}`
+        : 'N/A';
   }
-
-  get isLoanTypeValid(): boolean {
-    return !!this.loanType?.trim();
-  }
-
-  get isAmountValid(): boolean {
-    return this.amount !== null && this.amount >= 10000 && this.amount <= 5000000;
-  }
-
-  get isPurposeValid(): boolean {
-    return !!this.purpose?.trim() && this.purpose.trim().length >= 3;
-  }
-
-  get isDurationValid(): boolean {
-    return this.durationMonths !== null && this.durationMonths >= 6 && this.durationMonths <= 360;
-  }
-
-  get isIncomeValid(): boolean {
-    return this.annualIncome !== null && this.annualIncome >= 100000;
-  }
-
-  get isEmploymentYearsValid(): boolean {
-    return this.employmentYears !== null && this.employmentYears >= 0 && this.employmentYears <= 50;
-  }
-
-  get isAgeValid(): boolean {
-    return this.age !== null && this.age >= 18 && this.age <= 75;
-  }
-
-  get amountError(): string {
-    if (!this.showValidation) return '';
-    if (this.amount === null) return 'Loan amount is required.';
-    if (this.amount < 10000) return 'Minimum loan amount is ₹10,000.';
-    if (this.amount > 5000000) return 'Maximum allowed here is ₹50,00,000.';
-    return '';
-  }
-
-  get purposeError(): string {
-    if (!this.showValidation) return '';
-    if (!this.purpose?.trim()) return 'Purpose is required.';
-    if (this.purpose.trim().length < 3) return 'Purpose should be at least 3 characters.';
-    return '';
-  }
-
-  get durationError(): string {
-    if (!this.showValidation) return '';
-    if (this.durationMonths === null) return 'Loan duration is required.';
-    if (this.durationMonths < 6) return 'Minimum duration is 6 months.';
-    if (this.durationMonths > 360) return 'Maximum duration is 360 months.';
-    return '';
-  }
-
-  get incomeError(): string {
-    if (!this.showValidation) return '';
-    if (this.annualIncome === null) return 'Annual income is required.';
-    if (this.annualIncome < 100000) return 'Income should be at least ₹1,00,000.';
-    return '';
-  }
-
-  get employmentYearsError(): string {
-    if (!this.showValidation) return '';
-    if (this.employmentYears === null) return 'Employment years is required.';
-    if (this.employmentYears < 0) return 'Employment years cannot be negative.';
-    if (this.employmentYears > 50) return 'Please enter a realistic value.';
-    return '';
-  }
-
-  get ageError(): string {
-    if (!this.showValidation) return '';
-    if (this.age === null) return 'Age is required.';
-    if (this.age < 18) return 'Applicant must be at least 18 years old.';
-    if (this.age > 75) return 'Please enter a valid age.';
-    return '';
-  }
-
-  get estimatedInterestRate(): number {
-    const income = Number(this.annualIncome ?? 0);
-    const amount = Number(this.amount ?? 0);
-    const employmentYears = Number(this.employmentYears ?? 0);
-    const age = Number(this.age ?? 0);
-
-    if (!this.isFormValid()) return 0;
-
-    if (income >= 1000000 && employmentYears >= 5 && age <= 55 && amount <= 800000) return 9.5;
-    if (income >= 600000 && employmentYears >= 3) return 10.75;
-    if (income >= 300000 && employmentYears >= 1) return 12.25;
-    return 13.75;
-  }
-
-  get estimatedEmi(): number {
-    if (!this.isFormValid()) return 0;
-
-    const principal = Number(this.amount ?? 0);
-    const months = Number(this.durationMonths ?? 0);
-    const annualRate = this.estimatedInterestRate;
-
-    if (!principal || !months || !annualRate) return 0;
-
-    const monthlyRate = annualRate / 12 / 100;
-    const emi =
-      (principal * monthlyRate * Math.pow(1 + monthlyRate, months)) /
-      (Math.pow(1 + monthlyRate, months) - 1);
-
-    return isFinite(emi) ? Math.round(emi) : 0;
-  }
-
-  get totalRepayment(): number {
-    return this.estimatedEmi * Number(this.durationMonths ?? 0);
-  }
-
-  get eligibilityScore(): number {
+ 
+  submitLoan(): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+ 
     if (
-      !this.loanType &&
-      this.amount === null &&
-      !this.purpose &&
-      this.durationMonths === null &&
-      this.annualIncome === null &&
-      this.employmentYears === null &&
-      this.age === null
+      !this.loanForm.loanType ||
+      !this.loanForm.amount ||
+      !this.loanForm.purpose ||
+      !this.loanForm.durationMonths ||
+      !this.loanForm.annualIncome ||
+      this.loanForm.employmentYears === null ||
+      this.loanForm.employmentYears === undefined ||
+      !this.loanForm.age ||
+      !this.selectedFile
     ) {
-      return 0;
+      this.errorMessage = 'All fields are required, including salary slip.';
+      return;
     }
-
-    let score = 45;
-
-    const income = Number(this.annualIncome ?? 0);
-    const amount = Number(this.amount ?? 0);
-    const duration = Number(this.durationMonths ?? 0);
-    const employmentYears = Number(this.employmentYears ?? 0);
-    const age = Number(this.age ?? 0);
-
-    if (income >= 1000000) score += 22;
-    else if (income >= 600000) score += 16;
-    else if (income >= 300000) score += 10;
-    else if (income > 0) score += 4;
-
-    if (employmentYears >= 8) score += 16;
-    else if (employmentYears >= 5) score += 12;
-    else if (employmentYears >= 2) score += 8;
-    else if (employmentYears >= 1) score += 4;
-
-    if (amount > 0 && income > 0) {
-      const ratio = amount / income;
-      if (ratio <= 0.30) score += 14;
-      else if (ratio <= 0.50) score += 8;
-      else if (ratio <= 0.75) score += 2;
-      else score -= 8;
+ 
+    const formData = new FormData();
+    formData.append('LoanType', this.loanForm.loanType);
+    formData.append('Amount', String(this.loanForm.amount));
+    formData.append('Purpose', this.loanForm.purpose);
+    formData.append('DurationMonths', String(this.loanForm.durationMonths));
+    formData.append('AnnualIncome', String(this.loanForm.annualIncome));
+    formData.append('EmploymentYears', String(this.loanForm.employmentYears));
+    formData.append('Age', String(this.loanForm.age));
+    formData.append('CreditScore', String(this.creditScore || 700));
+    formData.append('ExistingLiabilities', String(this.existingLiabilities || 0));
+ 
+    if (this.selectedFile) {
+      formData.append('SalarySlip', this.selectedFile);
     }
-
-    if (duration >= 12 && duration <= 60) score += 6;
-    else if (duration > 60 && duration <= 120) score += 2;
-
-    if (age >= 21 && age <= 55) score += 8;
-    else if (age > 55 && age <= 65) score += 3;
-    else if (age >= 18 && age < 21) score += 2;
-    else score -= 5;
-
-    return Math.max(0, Math.min(100, score));
+ 
+    this.loanService.applyLoan(formData).subscribe({
+      next: (res: any) => {
+        this.successMessage = res?.message || 'Loan applied successfully.';
+        this.errorMessage = '';
+ 
+        this.loanForm = {
+          loanType: '',
+          amount: null,
+          purpose: '',
+          durationMonths: null,
+          annualIncome: null,
+          employmentYears: null,
+          age: null
+        };
+ 
+        this.selectedFile = null;
+        this.selectedFileName = '';
+ 
+        this.eligibilityScore = 0;
+        this.recommendedDecision = 'N/A';
+        this.riskLevel = 'N/A';
+        this.repaymentFit = 'N/A';
+        this.interestRate = 'N/A';
+        this.estimatedEmi = 'N/A';
+        this.totalRepayment = 'N/A';
+ 
+        this.loanService.notifyLoanStatusChanged();
+      },
+      error: (err: any) => {
+        console.error('Loan submission error:', err);
+        console.error('Backend error body:', err?.error);
+        this.successMessage = '';
+        this.errorMessage = err?.error?.message || err?.error?.title || 'Loan submission failed. Please try again.';
+      }
+    });
   }
-
-  get riskLevel(): string {
-    if (this.eligibilityScore >= 80) return 'Low Risk';
-    if (this.eligibilityScore >= 65) return 'Moderate Risk';
-    return 'High Risk';
-  }
-
-  get recommendedDecision(): string {
-    if (this.eligibilityScore === 0) return 'Awaiting Input';
-    if (this.eligibilityScore >= 80) return 'Likely Approve';
-    if (this.eligibilityScore >= 65) return 'Needs Manual Review';
-    return 'Likely Reject';
-  }
-
-  get scoreStrokeOffset(): number {
-    const radius = 52;
-    const circumference = 2 * Math.PI * radius;
-    return circumference - (this.eligibilityScore / 100) * circumference;
-  }
-
-  get completionPercent(): number {
-    let count = 0;
-    if (this.isLoanTypeValid) count++;
-    if (this.isAmountValid) count++;
-    if (this.isPurposeValid) count++;
-    if (this.isDurationValid) count++;
-    if (this.isIncomeValid) count++;
-    if (this.isEmploymentYearsValid) count++;
-    if (this.isAgeValid) count++;
-    return Math.round((count / 7) * 100);
-  }
-
-  get formStatus(): string {
-    if (this.completionPercent === 100) return 'Ready to Submit';
-    if (this.completionPercent >= 50) return 'In Progress';
-    return 'Draft';
-  }
-
-  get affordabilityBand(): string {
-    const emi = this.estimatedEmi;
-    const monthlyIncome = Number(this.annualIncome ?? 0) / 12;
-    if (!emi || !monthlyIncome) return 'Not available';
-
-    const ratio = emi / monthlyIncome;
-    if (ratio <= 0.25) return 'Comfortable';
-    if (ratio <= 0.4) return 'Manageable';
-    return 'High repayment burden';
-  }
-
-  get riskBadgeClass(): string {
-    if (this.riskLevel === 'Low Risk') return 'badge-low';
-    if (this.riskLevel === 'Moderate Risk') return 'badge-medium';
-    return 'badge-high';
-  }
-
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(value || 0);
+ 
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 }
+
+
+
+
+
+
+
+/*import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { LoanService } from '../services/loan.service';
+import { AuthService } from '../services/auth.service';
+ 
+@Component({
+  selector: 'app-apply-loan',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  templateUrl: './apply-loan.html',
+  styleUrl: './apply-loan.css'
+})
+export class ApplyLoanComponent implements OnInit {
+  loanForm = {
+    loanType: '',
+    amount: null as number | null,
+    purpose: '',
+    durationMonths: null as number | null,
+    annualIncome: null as number | null,
+    employmentYears: null as number | null,
+    age: null as number | null
+  };
+ 
+  selectedFile: File | null = null;
+  selectedFileName = '';
+ 
+  successMessage = '';
+  errorMessage = '';
+ 
+  eligibilityScore = 0;
+  recommendedDecision = 'N/A';
+  riskLevel = 'N/A';
+  repaymentFit = 'N/A';
+  interestRate = 'N/A';
+  estimatedEmi = 'N/A';
+  totalRepayment = 'N/A';
+ 
+  creditScore = 700;
+  existingLiabilities = 0;
+ 
+  constructor(
+    private loanService: LoanService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+ 
+  ngOnInit(): void {
+    this.calculatePreview();
+  }
+ 
+  onFileSelected(event: any): void {
+    const file = event.target.files?.[0];
+ 
+    if (!file) {
+      this.selectedFile = null;
+      this.selectedFileName = '';
+      this.calculatePreview();
+      return;
+    }
+ 
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.errorMessage = 'Please upload salary slip in PDF format only.';
+      this.selectedFile = null;
+      this.selectedFileName = '';
+      this.calculatePreview();
+      return;
+    }
+ 
+    this.selectedFile = file;
+    this.selectedFileName = file.name;
+    this.errorMessage = '';
+    this.calculatePreview();
+  }
+ 
+  removeFile(): void {
+    this.selectedFile = null;
+    this.selectedFileName = '';
+    this.calculatePreview();
+  }
+ 
+  calculatePreview(): void {
+    const amount = Number(this.loanForm.amount || 0);
+    const durationMonths = Number(this.loanForm.durationMonths || 0);
+    const annualIncome = Number(this.loanForm.annualIncome || 0);
+    const employmentYears = Number(this.loanForm.employmentYears || 0);
+    const age = Number(this.loanForm.age || 0);
+    const loanType = this.loanForm.loanType || '';
+ 
+    let interest = 12;
+ 
+    switch (loanType) {
+      case 'Home Loan':
+        interest = 8.75;
+        break;
+      case 'Vehicle Loan':
+        interest = 9.5;
+        break;
+      case 'Education Loan':
+        interest = 10.75;
+        break;
+      case 'Personal Loan':
+        interest = 12.25;
+        break;
+      default:
+        interest = 12;
+        break;
+    }
+ 
+    this.interestRate = `${interest.toFixed(2)}%`;
+ 
+    let score = 0;
+ 
+    switch (loanType) {
+      case 'Home Loan':
+        score += 18;
+        break;
+      case 'Education Loan':
+        score += 14;
+        break;
+      case 'Vehicle Loan':
+        score += 12;
+        break;
+      case 'Personal Loan':
+        score += 8;
+        break;
+    }
+ 
+    if (age >= 23 && age <= 55) score += 15;
+    else if (age >= 21 && age <= 58) score += 12;
+    else if (age > 18 && age <= 60) score += 8;
+ 
+    if (annualIncome >= 1200000) score += 22;
+    else if (annualIncome >= 900000) score += 18;
+    else if (annualIncome >= 700000) score += 15;
+    else if (annualIncome >= 500000) score += 12;
+    else if (annualIncome >= 350000) score += 7;
+    else if (annualIncome >= 250000) score += 3;
+ 
+    if (employmentYears >= 8) score += 18;
+    else if (employmentYears >= 5) score += 15;
+    else if (employmentYears >= 3) score += 10;
+    else if (employmentYears >= 1) score += 5;
+ 
+    const loanToIncomeRatio = annualIncome > 0 ? amount / annualIncome : 99;
+ 
+    if (loanToIncomeRatio <= 0.2) score += 18;
+    else if (loanToIncomeRatio <= 0.5) score += 15;
+    else if (loanToIncomeRatio <= 1.0) score += 10;
+    else if (loanToIncomeRatio <= 1.5) score += 4;
+    else score -= 10;
+ 
+    if (durationMonths >= 36 && durationMonths <= 120) score += 10;
+    else if (durationMonths >= 24) score += 7;
+    else if (durationMonths >= 12) score += 4;
+    else if (durationMonths > 0) score += 1;
+ 
+    if (this.selectedFile) score += 5;
+ 
+    const monthlyIncome = annualIncome > 0 ? annualIncome / 12 : 0;
+    const monthlyRate = interest / 12 / 100;
+ 
+    let emi = 0;
+    if (amount > 0 && durationMonths > 0 && monthlyRate > 0) {
+      const factor = Math.pow(1 + monthlyRate, durationMonths);
+      emi = (amount * monthlyRate * factor) / (factor - 1);
+    }
+ 
+    const emiRatio = monthlyIncome > 0 ? emi / monthlyIncome : 1;
+ 
+    if (emiRatio <= 0.2) score += 20;
+    else if (emiRatio <= 0.3) score += 16;
+    else if (emiRatio <= 0.4) score += 10;
+    else if (emiRatio <= 0.5) score += 3;
+    else score -= 15;
+ 
+    if (loanToIncomeRatio > 1.5) score -= 8;
+    if (emiRatio > 0.45) score -= 10;
+    if (emiRatio > 0.55) score -= 10;
+    if (annualIncome < 400000 && amount > 500000) score -= 10;
+    if (employmentYears < 2 && amount > 300000) score -= 8;
+    if (age < 21 || age > 60) score -= 12;
+ 
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    this.eligibilityScore = score;
+ 
+    if (score >= 85) {
+      this.riskLevel = 'Low';
+      this.recommendedDecision = 'Likely Approve';
+      this.repaymentFit = 'Comfortable';
+    } else if (score >= 65) {
+      this.riskLevel = 'Moderate';
+      this.recommendedDecision = 'Review';
+      this.repaymentFit = 'Manageable';
+    } else if (score >= 40) {
+      this.riskLevel = 'High';
+      this.recommendedDecision = 'Needs Review';
+      this.repaymentFit = 'Risky';
+    } else {
+      this.riskLevel = 'Very High';
+      this.recommendedDecision = 'Likely Reject';
+      this.repaymentFit = 'Risky';
+    }
+ 
+    this.estimatedEmi =
+      emi > 0 ? `₹${Math.round(emi).toLocaleString()}/month` : 'N/A';
+ 
+    this.totalRepayment =
+      emi > 0 && durationMonths > 0
+        ? `₹${Math.round(emi * durationMonths).toLocaleString()}`
+        : 'N/A';
+  }
+ 
+  submitLoan(): void {
+    this.successMessage = '';
+    this.errorMessage = '';
+ 
+    if (
+      !this.loanForm.loanType ||
+      !this.loanForm.amount ||
+      !this.loanForm.purpose ||
+      !this.loanForm.durationMonths ||
+      !this.loanForm.annualIncome ||
+      this.loanForm.employmentYears === null ||
+      this.loanForm.employmentYears === undefined ||
+      !this.loanForm.age ||
+      !this.selectedFile
+    ) {
+      this.errorMessage = 'All fields are required, including salary slip.';
+      return;
+    }
+ 
+    const formData = new FormData();
+    formData.append('LoanType', this.loanForm.loanType);
+    formData.append('Amount', String(this.loanForm.amount));
+    formData.append('Purpose', this.loanForm.purpose);
+    formData.append('DurationMonths', String(this.loanForm.durationMonths));
+    formData.append('AnnualIncome', String(this.loanForm.annualIncome));
+    formData.append('EmploymentYears', String(this.loanForm.employmentYears));
+    formData.append('Age', String(this.loanForm.age));
+    formData.append('CreditScore', String(this.creditScore || 700));
+    formData.append('ExistingLiabilities', String(this.existingLiabilities || 0));
+ 
+    if (this.selectedFile) {
+      formData.append('SalarySlip', this.selectedFile);
+    }
+ 
+    this.loanService.applyLoan(formData).subscribe({
+      next: (res: any) => {
+        this.successMessage = res?.message || 'Loan applied successfully.';
+        this.errorMessage = '';
+ 
+        this.loanForm = {
+          loanType: '',
+          amount: null,
+          purpose: '',
+          durationMonths: null,
+          annualIncome: null,
+          employmentYears: null,
+          age: null
+        };
+ 
+        this.selectedFile = null;
+        this.selectedFileName = '';
+ 
+        this.eligibilityScore = 0;
+        this.recommendedDecision = 'N/A';
+        this.riskLevel = 'N/A';
+        this.repaymentFit = 'N/A';
+        this.interestRate = 'N/A';
+        this.estimatedEmi = 'N/A';
+        this.totalRepayment = 'N/A';
+ 
+        this.loanService.notifyLoanStatusChanged();
+      },
+      error: (err: any) => {
+        console.error('Loan submission error:', err);
+        this.successMessage = '';
+        this.errorMessage = err?.error?.message || 'Loan submission failed. Please try again.';
+      }
+    });
+  }
+ 
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+}*/

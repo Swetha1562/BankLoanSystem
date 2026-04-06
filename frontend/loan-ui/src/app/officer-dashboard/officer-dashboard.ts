@@ -1,76 +1,163 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { LoanService } from '../services/loan.service';
-
+import { ToastService } from '../shared/toast/toast.service';
+ 
 @Component({
   selector: 'app-officer-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './officer-dashboard.html',
-  styleUrls: ['./officer-dashboard.css']
+  styleUrl: './officer-dashboard.css'
 })
-export class OfficerDashboardComponent implements OnInit {
+export class OfficerDashboardComponent implements OnInit, OnDestroy {
   totalLoans = 0;
   pendingLoans = 0;
   approvedLoans = 0;
   rejectedLoans = 0;
+ 
+  isLoading = true;
   errorMessage = '';
-  isLoading = false;
-
+ 
+  private statusSubscription?: Subscription;
+ 
   constructor(
-    private router: Router,
     private loanService: LoanService,
-    private cdr: ChangeDetectorRef
+    private router: Router,
+    private toastService: ToastService
   ) {}
-
+ 
   ngOnInit(): void {
     this.loadDashboardStats();
+    this.loanService.startConnection();
+ 
+    this.statusSubscription = this.loanService.loanStatusChanged$.subscribe(() => {
+      this.loadDashboardStats(false);
+    });
   }
-
-  loadDashboardStats(): void {
-    this.isLoading = true;
+ 
+  loadDashboardStats(showLoader: boolean = true): void {
+    if (showLoader) {
+      this.isLoading = true;
+    }
+ 
     this.errorMessage = '';
-
-    const token = localStorage.getItem('token');
-    console.log('OFFICER TOKEN:', token);
-
+ 
     this.loanService.getAllLoans().subscribe({
-      next: (res: any[]) => {
-        console.log('OFFICER API RESPONSE:', res);
-
-        const loans = Array.isArray(res) ? res : [];
-
-        this.totalLoans = loans.length;
-        this.pendingLoans = loans.filter(
-          (x: any) => x.status === 'Pending' || x.Status === 'Pending'
-        ).length;
-        this.approvedLoans = loans.filter(
-          (x: any) => x.status === 'Approved' || x.Status === 'Approved'
-        ).length;
-        this.rejectedLoans = loans.filter(
-          (x: any) => x.status === 'Rejected' || x.Status === 'Rejected'
-        ).length;
-
-        console.log('TOTAL:', this.totalLoans);
-        console.log('PENDING:', this.pendingLoans);
-        console.log('APPROVED:', this.approvedLoans);
-        console.log('REJECTED:', this.rejectedLoans);
-
+      next: (loans: any[]) => {
+        const data = Array.isArray(loans) ? loans : [];
+ 
+        this.totalLoans = data.length;
+        this.pendingLoans = data.filter((loan: any) => this.normalizeStatus(loan.status) === 'pending').length;
+        this.approvedLoans = data.filter((loan: any) => this.normalizeStatus(loan.status) === 'approved').length;
+        this.rejectedLoans = data.filter((loan: any) => this.normalizeStatus(loan.status) === 'rejected').length;
+ 
         this.isLoading = false;
-        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Officer dashboard error:', err);
-        this.errorMessage = err?.error || 'Unable to load officer dashboard.';
+        this.errorMessage = 'Unable to load officer dashboard.';
+        this.totalLoans = 0;
+        this.pendingLoans = 0;
+        this.approvedLoans = 0;
+        this.rejectedLoans = 0;
         this.isLoading = false;
-        this.cdr.detectChanges();
       }
     });
   }
-
+ 
+  normalizeStatus(status: string): string {
+    return (status || '').trim().toLowerCase();
+  }
+ 
+  goToAllLoans(filter: string): void {
+    this.router.navigate(['/all-loans'], {
+      queryParams: { filter }
+    });
+  }
+ 
   logout(): void {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    this.toastService.showSuccess('Logged out successfully');
     this.router.navigate(['/login']);
   }
+ 
+  ngOnDestroy(): void {
+    this.statusSubscription?.unsubscribe();
+  }
 }
+
+
+
+/*import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { LoanService } from '../services/loan.service';
+import { ToastService } from '../shared/toast/toast.service';
+ 
+@Component({
+  selector: 'app-officer-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  templateUrl: './officer-dashboard.html',
+  styleUrl: './officer-dashboard.css'
+})
+export class OfficerDashboardComponent implements OnInit, OnDestroy {
+  totalLoans = 0;
+  pendingLoans = 0;
+  approvedLoans = 0;
+  rejectedLoans = 0;
+ 
+  isLoading = true;
+  errorMessage = '';
+ 
+  private statusSubscription?: Subscription;
+ 
+  constructor(
+    private loanService: LoanService,
+    private router: Router,
+    private toastService: ToastService
+  ) {}
+ 
+  ngOnInit(): void {
+    this.loadDashboardStats();
+    this.loanService.startConnection();
+ 
+    this.statusSubscription = this.loanService.loanStatusChangeds$.subscribe(() => {
+      this.loadDashboardStats();
+    });
+  }
+ 
+  loadDashboardStats(): void {
+    this.isLoading = true;
+    this.errorMessage = '';
+ 
+    this.loanService.getOfficerSummary().subscribe({
+      next: (res: any) => {
+        this.totalLoans = res?.totalLoans ?? 0;
+        this.pendingLoans = res?.pendingLoans ?? 0;
+        this.approvedLoans = res?.approvedLoans ?? 0;
+        this.rejectedLoans = res?.rejectedLoans ?? 0;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Officer dashboard error:', err);
+        this.errorMessage = 'Unable to load officer dashboard.';
+        this.isLoading = false;
+      }
+    });
+  }
+ 
+  logout(): void {
+    localStorage.removeItem('token');
+    this.toastService.show('Logged out successfully');
+    this.router.navigate(['/login']);
+  }
+ 
+  ngOnDestroy(): void {
+    this.statusSubscription?.unsubscribe();
+  }
+}*/

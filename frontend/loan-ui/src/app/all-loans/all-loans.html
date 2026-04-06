@@ -1,112 +1,248 @@
 <div class="page-shell">
-  <div
-    *ngIf="successMessage"
-    class="toast toast-success"
-  >
-    {{ successMessage }}
-  </div>
+  <aside class="sidebar">
+    <div class="sidebar-brand"></div>
 
-  <div
-    *ngIf="errorMessage"
-    class="toast toast-error"
-  >
-    {{ errorMessage }}
-  </div>
+    <nav class="sidebar-nav">
+      <a
+        class="nav-link"
+        routerLink="/officer-dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
 
-  <div class="page-header">
-    <div>
-      <h1>All Loan Applications</h1>
-      <p>Review all submitted loan requests and take approval decisions.</p>
-    </div>
+      <a
+        class="nav-link"
+        routerLink="/all-loans"
+        routerLinkActive="active"
+      >
+        All Loans
+      </a>
 
-    <button class="btn-secondary" type="button" (click)="goBack()">
-      Back
-    </button>
-  </div>
+      <!--<a
+        class="nav-link"
+        href="javascript:void(0)"
+        (click)="logout()"
+      >
+        Logout
+      </a>-->
+    </nav>
+  </aside>
 
-  <div class="stat-card">
-    <h3>Total Applications</h3>
-    <div class="stat-number">{{ loans.length }}</div>
-    <p>Loans available for review</p>
-  </div>
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left"></div>
+    </header>
 
-  <div *ngIf="isLoading" class="loading-card">
-    Loading loan applications...
-  </div>
+    <!-- ===== HEADER + FILTERS ===== -->
+    <section class="page-header">
+      <div>
+        <h1>All Loans</h1>
+        <p>Review, approve and reject customer loan applications.</p>
+      </div>
 
-  <div class="table-card" *ngIf="!isLoading && loans.length > 0; else noLoans">
-    <table class="loan-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Loan Type</th>
-          <th>Amount</th>
-          <th>Purpose</th>
-          <th>Eligibility Score</th>
-          <th>Risk Level</th>
-          <th>Recommendation</th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
+      <div class="filter-pills">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'all'"
+          (click)="setFilter('all')"
+        >
+          All
+        </button>
 
-      <tbody>
-        <tr *ngFor="let loan of loans">
-          <td>{{ loan.id }}</td>
-          <td>{{ loan.loanType }}</td>
-          <td>₹ {{ loan.amount }}</td>
-          <td>{{ loan.purpose }}</td>
-          <td>{{ loan.eligibilityScore ?? '-' }}</td>
-          <td>{{ loan.riskLevel ?? '-' }}</td>
-          <td>{{ loan.recommendedDecision ?? '-' }}</td>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'pending'"
+          (click)="setFilter('pending')"
+        >
+          Pending
+        </button>
 
-          <td>
-            <span
-              class="status-badge"
-              [ngClass]="{
-                'status-pending': loan.status === 'Pending',
-                'status-approved': loan.status === 'Approved',
-                'status-rejected': loan.status === 'Rejected'
-              }"
-            >
-              {{ loan.status }}
-            </span>
-          </td>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'approved'"
+          (click)="setFilter('approved')"
+        >
+          Approved
+        </button>
 
-          <td>
-            <ng-container *ngIf="loan.status === 'Pending'; else done">
-              <div class="action-buttons">
-                <button
-                  class="btn-approve"
-                  type="button"
-                  (click)="approve(loan)"
-                >
-                  Approve
-                </button>
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'rejected'"
+          (click)="setFilter('rejected')"
+        >
+          Rejected
+        </button>
+      </div>
+    </section>
 
-                <button
-                  class="btn-reject"
-                  type="button"
-                  (click)="reject(loan)"
-                >
-                  Reject
-                </button>
+    <!-- ===== ERROR ===== -->
+    <section *ngIf="errorMessage" class="message error-message">
+      {{ errorMessage }}
+    </section>
+
+    <!-- ===== LOADING ===== -->
+    <section class="loading-state" *ngIf="loading">
+      <p>Loading loans...</p>
+    </section>
+
+    <!-- ===== TABLE ===== -->
+    <section
+      class="table-wrapper"
+      *ngIf="!loading && filteredLoans.length > 0"
+    >
+      <table class="loan-table">
+        <thead>
+          <tr>
+            <th>Loan ID</th>
+            <th>Customer</th>
+            <th>Loan Type</th>
+            <th>Amount</th>
+            <th>Purpose</th>
+            <th>Duration</th>
+            <th>Income</th>
+            <th>Age</th>
+            <th>Risk</th>
+            <th>Eligibility</th>
+            <th>Recommendation</th>
+            <th>Status</th>
+            <th>Stage</th>
+            <th>Salary Slip</th>
+            <th>Remarks</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let loan of filteredLoans">
+            <td>{{ loan.id }}</td>
+
+            <td>
+              <div class="customer-cell">
+                <div class="customer-name">
+                  {{ loan.customerName || 'Customer' }}
+                </div>
+                <div class="customer-email" *ngIf="loan.email">
+                  {{ loan.email }}
+                </div>
               </div>
-            </ng-container>
+            </td>
 
-            <ng-template #done>
-              <span class="done-text">Action Completed</span>
-            </ng-template>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <td>{{ loan.loanType }}</td>
+            <td>{{ loan.amount | number:'1.0-0' }}</td>
+            <td>{{ loan.purpose }}</td>
+            <td>{{ loan.durationMonths }} months</td>
+            <td>{{ loan.annualIncome | number:'1.0-0' }}</td>
+            <td>{{ loan.age }}</td>
+            <td>{{ loan.riskLevel || 'N/A' }}</td>
+            <td>{{ loan.eligibilityScore ?? 'N/A' }}</td>
+            <td>{{ loan.recommendedDecision || 'N/A' }}</td>
 
-  <ng-template #noLoans>
-    <div class="empty-state" *ngIf="!isLoading">
-      <h3>No loan applications found</h3>
-      <p>There are currently no loan requests available for review.</p>
-    </div>
-  </ng-template>
+            <!-- STATUS -->
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="{
+                  pending: normalizeStatus(loan.status) === 'pending',
+                  approved: normalizeStatus(loan.status) === 'approved',
+                  rejected: normalizeStatus(loan.status) === 'rejected'
+                }"
+              >
+                {{ loan.status }}
+              </span>
+            </td>
+
+            <td>{{ loan.currentStage || 'N/A' }}</td>
+
+            <!-- FILE -->
+            <td>
+              <a
+                *ngIf="loan.salarySlipFilePath || loan.salarySlipPath"
+                class="file-link"
+                [href]="getSalarySlipUrl(loan)"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open File
+              </a>
+              <span *ngIf="!(loan.salarySlipFilePath || loan.salarySlipPath)">
+                —
+              </span>
+            </td>
+
+            <td>{{ loan.remarks || 'N/A' }}</td>
+
+            <!-- ACTION -->
+            <td class="action-cell">
+              <div *ngIf="canTakeAction(loan); else actionDone">
+                <button
+                  type="button"
+                  class="review-btn"
+                  (click)="openReview(loan.id)"
+                >
+                  {{
+                    reviewLoanId === loan.id
+                      ? 'Close Review'
+                      : 'Review'
+                  }}
+                </button>
+
+                <div
+                  class="review-panel"
+                  *ngIf="reviewLoanId === loan.id"
+                >
+                  <!--<label [for]="'remarks-' + loan.id">
+                    Officer Remarks
+                  </label>-->
+
+                  <textarea
+                    [id]="'remarks-' + loan.id"
+                    rows="3"
+                    [ngModel]="getRemarks(loan.id)"
+                    (ngModelChange)="setRemarks(loan.id, $event)"
+                    placeholder="Enter remarks before approving or rejecting"
+                  ></textarea>
+
+                  <div class="review-buttons">
+                    <button
+                      type="button"
+                      class="approve-btn"
+                      (click)="approveLoan(loan.id)"
+                    >
+                      Approve
+                    </button>
+
+                    <button
+                      type="button"
+                      class="reject-btn"
+                      (click)="rejectLoan(loan.id)"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <ng-template #actionDone>
+                <span class="completed-action">Completed</span>
+              </ng-template>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ===== EMPTY ===== -->
+    <section
+      class="empty-state"
+      *ngIf="!loading && !errorMessage && filteredLoans.length === 0"
+    >
+      <p>No loans found for the selected filter.</p>
+    </section>
+  </main>
 </div>

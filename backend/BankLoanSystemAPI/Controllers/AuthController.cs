@@ -39,13 +39,13 @@ public class AuthController : ControllerBase
             return BadRequest("Role is required.");
  
         var normalizedEmail = dto.Email.Trim().ToLower();
-        var normalizedRole = dto.Role.Trim();
+        var normalizedRole = "Customer";
  
         if (_context.Users.Any(x => x.Email.ToLower() == normalizedEmail))
             return BadRequest("Email already exists.");
  
-        if (normalizedRole != "Customer" && normalizedRole != "Officer")
-            return BadRequest("Role must be either Customer or Officer.");
+        /*if (normalizedRole != "Customer" && normalizedRole != "Officer")
+            return BadRequest("Role must be either Customer or Officer.");*/
  
         if (!IsStrongPassword(dto.Password))
         {
@@ -88,9 +88,7 @@ public class AuthController : ControllerBase
  
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return Unauthorized("Invalid password.");
- 
         var token = _tokenService.CreateToken(user);
- 
         return Ok(new
         {
             message = "Login successful.",

@@ -14,7 +14,7 @@
         </h1>
 
         <p class="hero-description">
-          StratosLend enables seamless customer registration, loan applications,
+          Mphasis enables seamless customer registration, loan applications,
           officer review, approval decisions, and real-time status tracking.
         </p>
 
@@ -80,7 +80,7 @@
           <!-- APPLY -->
           <button
             class="apply-btn"
-            (click)="applyLoan(loan.title)"
+            routerLink="/login"
             [disabled]="userRole === 'Officer'">
             Apply Now
           </button>
@@ -98,8 +98,8 @@
 
     <div class="why-left">
       <div class="section-tag">Why Choose Us</div>
-      <h2>Built Like a Real Financial Platform</h2>
-
+      <h2>Advanced Loan Processing with Real-Time Insights</h2>
+      
       <p>
         Secure access, structured workflows, and transparent tracking.
       </p>
@@ -134,16 +134,16 @@
     <div class="footer-content">
 
       <div>
-        <h3>StratosLend</h3>
+        <h3>Mphasis Bank</h3>
         <p>Smart Lending. Trusted Decisions.</p>
       </div>
 
-      <div class="footer-links">
-        <a routerLink="/" fragment="home">Home</a>
+      <!--<div class="footer-links">
+        
         <a routerLink="/" fragment="about">About</a>
         <a routerLink="/" fragment="contact">Contact</a>
-        <a routerLink="/login">Login</a>
-      </div>
+        
+      </div>-->
 
     </div>
   </footer>

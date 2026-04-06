@@ -1,41 +1,71 @@
-<div class="page-container">
-
-  <div class="topbar">
-    <div>
-      <h1 class="page-title">Officer Dashboard</h1>
-      <p class="text-muted">Review and manage loan applications</p>
+<div class="page-shell">
+ 
+  <aside class="sidebar">
+    <div class="sidebar-brand">
     </div>
-
-    <div class="topbar-actions">
-      <button class="btn-primary" routerLink="/all-loans">View Applications</button>
-      <button class="btn-danger" (click)="logout()">Logout</button>
+ 
+    <nav class="sidebar-nav">
+      <a
+        class="nav-link"
+        routerLink="/officer-dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
+ 
+      <a
+        class="nav-link"
+        routerLink="/all-loans"
+        routerLinkActive="active"
+      >
+        All Loans
+      </a>
+ 
+      <!--<a class="nav-link logout-link" (click)="logout()">
+        Logout
+      </a>-->
+    </nav>
+  </aside>
+ 
+  <main class="main-content">
+    <section class="page-header">
+      <p class="eyebrow">OFFICER PORTAL</p>
+      <h1>Officer Dashboard</h1>
+      <p>Review and manage loan applications</p>
+    </section>
+ 
+    <div *ngIf="errorMessage" class="error-banner">
+      {{ errorMessage }}
     </div>
-  </div>
-
-  <div class="metric-grid">
-    <div class="metric-card">
-      <h4>Total Applications</h4>
-      <div class="metric-value">{{ totalLoans }}</div>
-      <div class="metric-note">All submitted loans</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Pending</h4>
-      <div class="metric-value">{{ pendingLoans }}</div>
-      <div class="metric-note">Need decision</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Approved</h4>
-      <div class="metric-value">{{ approvedLoans }}</div>
-      <div class="metric-note">Accepted loans</div>
-    </div>
-
-    <div class="metric-card">
-      <h4>Rejected</h4>
-      <div class="metric-value">{{ rejectedLoans }}</div>
-      <div class="metric-note">Rejected loans</div>
-    </div>
-  </div>
-
+ 
+    <section class="summary-row">
+      <button class="summary-card clickable" type="button" (click)="goToAllLoans('all')">
+        <h4>Total Applications</h4>
+        <div class="summary-value">{{ totalLoans }}</div>
+        <div class="summary-note">All submitted loans</div>
+      </button>
+ 
+      <button class="summary-card clickable" type="button" (click)="goToAllLoans('pending')">
+        <h4>Pending</h4>
+        <div class="summary-value">{{ pendingLoans }}</div>
+        <div class="summary-note">Need decision</div>
+      </button>
+ 
+      <button class="summary-card clickable" type="button" (click)="goToAllLoans('approved')">
+        <h4>Approved</h4>
+        <div class="summary-value">{{ approvedLoans }}</div>
+        <div class="summary-note">Accepted loans</div>
+      </button>
+ 
+      <button class="summary-card clickable" type="button" (click)="goToAllLoans('rejected')">
+        <h4>Rejected</h4>
+        <div class="summary-value">{{ rejectedLoans }}</div>
+        <div class="summary-note">Rejected loans</div>
+      </button>
+    </section>
+  </main>
 </div>
+
+
+

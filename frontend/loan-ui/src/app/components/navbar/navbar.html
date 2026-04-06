@@ -1,25 +1,60 @@
-<header class="navbar">
+<header class="top-navbar" *ngIf="showNavbar">
   <div class="navbar-container">
-
-    <!-- BRAND -->
-    <a routerLink="/" fragment="home" class="brand">
-      <img src="assets/logo.png" alt="StratosLend Logo" class="logo logo-zoom" />
-
-      <div class="brand-text">
-        <span class="brand-title">StratosLend</span>
-        <span class="brand-subtitle">Smart Lending. Trusted Decisions.</span>
-      </div>
-    </a>
-
-    <!-- NAV -->
+ 
+    <div class="brand-block">
+      <img src="assets/logo.png" alt="Astra Logo" class="logo-img" />
+      <div class="text-block">
+      <div class="logo">Astra Bank</div>
+      <div class="tagline">Smart Lending. Trusted Decisions.</div>
+    </div>
+  </div>
+ 
+ 
     <nav class="nav-links">
-      <a routerLink="/" fragment="home">Home</a>
-      <a routerLink="/" fragment="about">About</a>
-      <a routerLink="/" fragment="contact">Contact</a>
-      <a routerLink="/login">Login</a>
-      <a routerLink="/register" class="register-btn">Sign Up</a>
+ 
+      <!-- HOME PAGE -->
+      <ng-container *ngIf="currentUrl === '/' || currentUrl === '/home'">
+        <a routerLink="/about" routerLinkActive="active-link">About</a>
+        <a routerLink="/contact" routerLinkActive="active-link">Contact</a>
+ 
+        <ng-container *ngIf="showAuthButtons">
+          <a routerLink="/login" class="nav-btn">Login</a>
+          <a routerLink="/register" class="nav-btn primary">Register</a>
+        </ng-container>
+      </ng-container>
+ 
+      <!--  ABOUT PAGE -->
+      <ng-container *ngIf="currentUrl === '/about'">
+        <a routerLink="/" class="nav-btn">← Back</a>
+      </ng-container>
+ 
+      <!-- CONTACT PAGE -->
+      <ng-container *ngIf="currentUrl === '/contact'">
+        <a routerLink="/" class="nav-btn">← Back</a>
+      </ng-container>
+ 
+      <!--  LOGIN / REGISTER / RESET PASSWORD -->
+      <ng-container *ngIf="
+        currentUrl === '/login' ||
+        currentUrl === '/register' ||
+        currentUrl.includes('reset-password')
+      ">
+        <a routerLink="/" class="nav-btn">Home</a>
+      </ng-container>
+ 
+      <!--  DASHBOARDS -->
+      <ng-container *ngIf="
+        currentUrl !== '/' &&
+        currentUrl !== '/home' &&
+        currentUrl !== '/about' &&
+        currentUrl !== '/contact' &&
+        currentUrl !== '/login' &&
+        currentUrl !== '/register' &&
+        !currentUrl.includes('reset-password')
+      ">
+        <a (click)="logout()" class="nav-btn logout">Logout</a>
+      </ng-container>
+ 
     </nav>
-    <button class="logout-btn" (click)="logout()">Logout</button>
-
   </div>
 </header>

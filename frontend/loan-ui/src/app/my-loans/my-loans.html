@@ -1,63 +1,155 @@
-<div class="page-container">
-  <div class="topbar">
-    <div>
-      <h1 class="page-title">My Loans</h1>
-      <p class="text-muted">
-        Review all your submitted applications and their latest status.
-      </p>
-    </div>
+<div class="page-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand"></div>
 
-   
-  </div>
+    <nav class="sidebar-nav">
+      <a
+        class="nav-link"
+        routerLink="/customer-dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        Dashboard
+      </a>
 
-  <div class="metric-grid" style="margin-bottom: 22px;">
-    <div class="metric-card">
-      <h4>Total Loans</h4>
-      <div class="metric-value">{{ loans.length }}</div>
-      <div class="metric-note">Applications submitted by you</div>
-    </div>
-  </div>
+      <a
+        class="nav-link"
+        routerLink="/apply-loan"
+        routerLinkActive="active"
+      >
+        Apply Loan
+      </a>
 
-  <div class="table-wrapper" *ngIf="loans.length > 0; else emptyState">
-    <table class="styled-table">
-      <thead>
-        <tr>
-          <th>Loan Type</th>
-          <th>Amount</th>
-          <th>Status</th>
-        </tr>
-      </thead>
+      <a
+        class="nav-link"
+        routerLink="/my-loans"
+        routerLinkActive="active"
+      >
+        My Loans
+      </a>
+    </nav>
+  </aside>
 
-      <tbody>
-        <tr *ngFor="let loan of loans">
-          <td>{{ loan.loanType }}</td>
-          <td>₹ {{ loan.amount }}</td>
-          <td>
-            <span
-              class="status-badge"
-              [ngClass]="{
-                'status-pending': loan.status === 'Pending',
-                'status-approved': loan.status === 'Approved',
-                'status-rejected': loan.status === 'Rejected'
-              }"
-            >
-              {{ loan.status }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <main class="main-content">
+    <header class="topbar"></header>
 
-  <ng-template #emptyState>
-    <div class="section-card empty-state">
-      <h3 style="margin-top: 0; color: var(--text-white);">No loans found</h3>
-      <p class="text-muted">
-        You have not submitted any loan applications yet.
-      </p>
-      <button class="btn-primary" type="button" routerLink="/apply-loan">
-        Apply for Loan
-      </button>
-    </div>
-  </ng-template>
+    <section class="page-header">
+      <div>
+        <h1>My Loans</h1>
+        <p>Review all your submitted applications and their latest status.</p>
+      </div>
+
+      <!--  Styled like ALL LOANS -->
+      <div class="filter-pills">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'all'"
+          (click)="setFilter('all')"
+        >
+          All
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'pending'"
+          (click)="setFilter('pending')"
+        >
+          Pending
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'approved'"
+          (click)="setFilter('approved')"
+        >
+          Approved
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="selectedFilter === 'rejected'"
+          (click)="setFilter('rejected')"
+        >
+          Rejected
+        </button>
+      </div>
+    </section>
+
+    <section class="summary-row">
+      <div class="summary-card">
+        <h3>Total Loans</h3>
+        <div class="summary-value">{{ getLoanCount() }}</div>
+      </div>
+
+    
+    </section>
+
+    <section *ngIf="errorMessage" class="error-state">
+      {{ errorMessage }}
+    </section>
+
+    <section class="table-wrapper" *ngIf="filteredLoans.length > 0">
+      <table class="loan-table">
+        <thead>
+          <tr>
+            <th>Loan ID</th>
+            <th>Loan Type</th>
+            <th>Amount</th>
+            <th>Purpose</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Stage</th>
+            <th>Risk</th>
+            <th>Eligibility</th>
+            <th>Recommendation</th>
+            <th>Remarks</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let loan of filteredLoans">
+            <td>{{ loan.id }}</td>
+            <td>{{ loan.loanType }}</td>
+            <td>{{ loan.amount | number:'1.0-0' }}</td>
+            <td>{{ loan.purpose }}</td>
+            <td>{{ loan.durationMonths }} months</td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="{
+                  pending: (loan.status || '').toLowerCase() === 'pending',
+                  approved: (loan.status || '').toLowerCase() === 'approved',
+                  rejected: (loan.status || '').toLowerCase() === 'rejected'
+                }"
+              >
+                {{ loan.status }}
+              </span>
+            </td>
+
+            <td>{{ loan.currentStage || 'N/A' }}</td>
+            <td>{{ loan.riskLevel || 'N/A' }}</td>
+            <td>{{ loan.eligibilityScore ?? 'N/A' }}</td>
+            <td>{{ loan.recommendedDecision || 'N/A' }}</td>
+            <td>{{ loan.remarks || 'N/A' }}</td>
+            <td>{{ loan.createdAt | date:'yyyy-MM-dd HH:mm:ss'}}</td>
+            <td>{{ loan.updatedAt ?? loan.createdAt | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section
+      class="empty-state"
+      *ngIf="!errorMessage && filteredLoans.length === 0"
+    >
+      <p>No loans found for the selected filter.</p>
+    </section>
+  </main>
 </div>

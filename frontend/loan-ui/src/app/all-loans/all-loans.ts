@@ -1,134 +1,171 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import {
-  LoanApplication,
-  LoanActionResponse,
-  LoanService
-} from '../services/loan.service';
-
+import { Subject, takeUntil } from 'rxjs';
+import { LoanService } from '../services/loan.service';
+import { AuthService } from '../services/auth.service';
+ 
 @Component({
   selector: 'app-all-loans',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './all-loans.html',
-  styleUrls: ['./all-loans.css']
+  styleUrl: './all-loans.css'
 })
-export class AllLoansComponent implements OnInit {
-  loans: LoanApplication[] = [];
+export class AllLoansComponent implements OnInit, OnDestroy {
+  loans: any[] = [];
+  filteredLoans: any[] = [];
+ 
+  selectedFilter = 'all';
+  loading = true;
   errorMessage = '';
-  successMessage = '';
-  isLoading = false;
+ 
+  reviewLoanId: number | null = null;
+  remarksMap: { [key: number]: string } = {};
+ 
+  private destroy$ = new Subject<void>();
 
+  getSalarySlipUrl(loan: any): string {
+    const rawPath = (loan.salarySlipFilePath || loan.salarySlipPath || '').trim();
+ 
+    if (!rawPath) {
+      return '';
+    }
+ 
+    if (rawPath.startsWith('/uploads/') || rawPath.startsWith('/Uploads/')) {
+      return 'http://localhost:5000' + rawPath;
+    }
+ 
+    if (rawPath.startsWith('uploads/') || rawPath.startsWith('Uploads/')) {
+      return 'http://localhost:5000/' + rawPath;
+    }
+ 
+    return 'http://localhost:5000/Uploads/' + rawPath;
+  }
+ 
   constructor(
     private loanService: LoanService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
+    private authService: AuthService,
+    private router: Router
   ) {}
-
+ 
   ngOnInit(): void {
-    this.loadAllLoans();
+    this.loadLoans();
+ 
+    this.loanService.loanStatusChanged$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.loadLoans();
+      });
   }
-
-  loadAllLoans(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const token = localStorage.getItem('token');
-    console.log('ALL LOANS TOKEN:', token);
-
+ 
+  loadLoans(): void {
+    this.loading = true;
+ 
     this.loanService.getAllLoans().subscribe({
-      next: (res: LoanApplication[]) => {
-        console.log('ALL LOANS API RESPONSE:', res);
-
+      next: (res: any[]) => {
         this.loans = Array.isArray(res) ? res : [];
-
-        console.log('ALL LOANS COUNT:', this.loans.length);
-
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.applyFilter();
+        this.loading = false;
+        this.errorMessage = '';
       },
       error: (err: any) => {
-        console.error('Error loading all loans:', err);
-        this.errorMessage =
-          typeof err?.error === 'string'
-            ? err.error
-            : err?.error?.message || 'Unable to load all loans.';
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        console.error('All loans error:', err);
+        this.loading = false;
+        this.errorMessage = 'Failed to load loans.';
+        this.loans = [];
+        this.filteredLoans = [];
       }
     });
   }
-
-  approve(loan: LoanApplication): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const remarks = prompt('Enter approval remarks (optional):') || '';
-    const loanId = Number(loan.id);
-    const rowVersion = loan.rowVersion;
-
-    console.log('APPROVE ID:', loanId);
-    console.log('APPROVE REMARKS:', remarks);
-    console.log('APPROVE ROW VERSION:', rowVersion);
-
-    this.loanService.approveLoan(loanId, remarks, rowVersion).subscribe({
-      next: (res: LoanActionResponse) => {
-        console.log('APPROVE SUCCESS RESPONSE:', res);
-        this.successMessage = res?.message || 'Loan approved successfully.';
-        alert(this.successMessage);
-        this.loadAllLoans();
-      },
-      error: (err: any) => {
-        console.error('APPROVE ERROR:', err);
-        this.errorMessage =
-          typeof err?.error === 'string'
-            ? err.error
-            : err?.error?.message || 'Unable to approve loan.';
-        alert(this.errorMessage);
-      }
-    });
+ 
+  setFilter(filter: string): void {
+    this.selectedFilter = filter.toLowerCase();
+    this.applyFilter();
   }
-
-  reject(loan: LoanApplication): void {
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const remarks = prompt('Enter rejection reason:');
-
-    if (!remarks || remarks.trim() === '') {
-      this.errorMessage = 'Rejection reason is required.';
-      alert(this.errorMessage);
+ 
+  applyFilter(): void {
+    if (this.selectedFilter === 'all') {
+      this.filteredLoans = [...this.loans];
       return;
     }
-
-    const loanId = Number(loan.id);
-    const rowVersion = loan.rowVersion;
-
-    console.log('REJECT ID:', loanId);
-    console.log('REJECT REMARKS:', remarks.trim());
-    console.log('REJECT ROW VERSION:', rowVersion);
-
-    this.loanService.rejectLoan(loanId, remarks.trim(), rowVersion).subscribe({
-      next: (res: LoanActionResponse) => {
-        console.log('REJECT SUCCESS RESPONSE:', res);
-        this.successMessage = res?.message || 'Loan rejected successfully.';
-        alert(this.successMessage);
-        this.loadAllLoans();
+ 
+    this.filteredLoans = this.loans.filter(
+      loan => this.normalizeStatus(loan.status) === this.selectedFilter
+    );
+  }
+ 
+  normalizeStatus(status: string): string {
+    return (status || '').trim().toLowerCase();
+  }
+ 
+  canTakeAction(loan: any): boolean {
+    return this.normalizeStatus(loan.status) === 'pending';
+  }
+ 
+  openReview(id: number): void {
+    this.reviewLoanId = this.reviewLoanId === id ? null : id;
+  }
+ 
+  setRemarks(id: number, value: string): void {
+    this.remarksMap[id] = value;
+  }
+ 
+  getRemarks(id: number): string {
+    return this.remarksMap[id] || '';
+  }
+ 
+  approveLoan(id: number): void {
+    const remarks = this.getRemarks(id).trim();
+    if (!remarks) {
+      this.errorMessage = 'Remarks are required before approval.';
+      return;
+    }
+ 
+    this.loanService.approveLoan(id, remarks).subscribe({
+      next: () => {
+        this.reviewLoanId = null;
+        delete this.remarksMap[id];
+        this.loanService.notifyLoanStatusChanged();
       },
       error: (err: any) => {
-        console.error('REJECT ERROR:', err);
-        this.errorMessage =
-          typeof err?.error === 'string'
-            ? err.error
-            : err?.error?.message || 'Unable to reject loan.';
-        alert(this.errorMessage);
+        console.error('Approve loan error:', err);
+        this.errorMessage = err?.error?.message || 'Approval failed.';
       }
     });
   }
-
-  goBack(): void {
-    this.router.navigate(['/officer-dashboard']);
+ 
+  rejectLoan(id: number): void {
+    const remarks = this.getRemarks(id).trim();
+    if (!remarks) {
+      this.errorMessage = 'Remarks are required before rejection.';
+      return;
+    }
+ 
+    this.loanService.rejectLoan(id, remarks).subscribe({
+      next: () => {
+        this.reviewLoanId = null;
+        delete this.remarksMap[id];
+        this.loanService.notifyLoanStatusChanged();
+      },
+      error: (err: any) => {
+        console.error('Reject loan error:', err);
+        this.errorMessage = err?.error?.message || 'Rejection failed.';
+      }
+    });
+  }
+ 
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+ 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }
+
+
+

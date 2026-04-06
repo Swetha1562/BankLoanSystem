@@ -80,8 +80,8 @@ public class DashboardController : ControllerBase
                 UpdatedAt = latestLoan.UpdatedAt == null
                     ? null
                     : latestLoan.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm:ss"),
-                PendingTime = latestLoan.Status == "Pending"
-                    ? FormatPendingTime(DateTime.UtcNow - latestLoan.PendingSince)
+                PendingTime = latestLoan.Status == "Pending" && latestLoan.PendingSince.HasValue
+                    ? FormatPendingTime(DateTime.UtcNow - latestLoan.PendingSince.Value)
                     : null
             }
         });
